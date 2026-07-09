@@ -194,11 +194,16 @@ p {
 }
 
 .home-hero,
+.selection-hero,
 .profile-band {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 16px;
+}
+
+.home-hero,
+.profile-band {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 14px;
@@ -206,6 +211,7 @@ p {
 }
 
 .home-hero h1,
+.selection-hero h1,
 .page-title h1,
 .profile-band h1 {
   font-size: 23px;
@@ -368,6 +374,7 @@ p {
 .service-card,
 .routine-card,
 .community-card,
+.selection-card,
 .product-card,
 .booking-card,
 .history-card,
@@ -385,6 +392,7 @@ p {
 .task-card,
 .routine-card,
 .community-card,
+.selection-card,
 .booking-card,
 .history-card,
 .member-card {
@@ -404,6 +412,63 @@ p {
 .routine-main {
   min-width: 0;
   flex: 1;
+}
+
+.selection-card {
+  display: grid;
+  gap: 12px;
+}
+
+.selection-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.selection-card h3 {
+  margin-top: 9px;
+  font-size: 16px;
+  line-height: 1.35;
+  font-weight: 900;
+}
+
+.selection-card p {
+  margin-top: 6px;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.55;
+  font-weight: 620;
+}
+
+.selection-price {
+  color: var(--teal);
+  font-size: 14px;
+  font-weight: 900;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.editor-note {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+  padding: 12px;
+}
+
+.editor-note strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.editor-note span {
+  display: block;
+  margin-top: 6px;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.55;
+  font-weight: 620;
 }
 
 .task-title,
@@ -646,7 +711,7 @@ p {
 
 .segmented {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 6px;
   background: var(--surface-2);
   border: 1px solid var(--line);
@@ -755,13 +820,40 @@ p {
   inset: auto 0 0;
   height: calc(76px + var(--safe-bottom));
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 2px;
   padding: 7px 8px calc(7px + var(--safe-bottom));
   background: rgba(255, 255, 255, 0.96);
   border-top: 1px solid var(--line);
   backdrop-filter: blur(16px);
   z-index: 50;
+}
+
+@media (max-width: 360px) {
+  .home-hero,
+  .selection-card-head {
+    grid-template-columns: 1fr;
+  }
+
+  .home-hero {
+    display: grid;
+  }
+
+  .hero-meter {
+    justify-self: start;
+  }
+
+  .selection-card-head {
+    display: grid;
+  }
+
+  .selection-price {
+    text-align: left;
+  }
+
+  .task-actions {
+    grid-template-columns: 1fr;
+  }
 }
 
 .tab-button {
