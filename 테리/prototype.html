@@ -1,0 +1,435 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+Home,
+History,
+Store,
+MessageCircle,
+CheckCircle2,
+AlertTriangle,
+Trash2,
+ShoppingBag,
+CalendarDays,
+Star,
+ChevronRight,
+Filter,
+X
+} from 'lucide-react';
+
+// --- 유틸리티 함수 ---
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+const getDaysElapsed = (dateString) => {
+const diff = Date.now() - new Date(dateString).getTime();
+return Math.floor(diff / MS_PER_DAY);
+};
+
+const formatDate = (dateString) => {
+const date = new Date(dateString);
+return `${date.getMonth() + 1}월 ${date.getDate()}일`;
+};
+
+// --- 목업 데이터 생성 ---
+const today = new Date();
+const daysAgo = (days) => new Date(today.getTime() - days * MS_PER_DAY).toISOString();
+
+const INITIAL_TASKS = [
+{ id: 1, name: '화장실 물때 청소', emoji: '🚽', targetDays: 7, lastCleanedDate: daysAgo(8) }, // 초과 (Red)
+{ id: 2, name: '수건 및 속옷 빨래', emoji: '🧺', targetDays: 4, lastCleanedDate: daysAgo(3) }, // 임박 (Yellow)
+{ id: 3, name: '방 바닥 청소기', emoji: '🧹', targetDays: 3, lastCleanedDate: daysAgo(1) }, // 안정 (White)
+{ id: 4, name: '냉장고 음식물 정리', emoji: '🍉', targetDays: 14, lastCleanedDate: daysAgo(15) }, // 초과 (Red)
+{ id: 5, name: '침구류 세탁', emoji: '🛌', targetDays: 30, lastCleanedDate: daysAgo(10) }, // 안정 (White)
+];
+
+const INITIAL_HISTORY = [
+{ id: 101, taskId: 3, taskName: '방 바닥 청소기', emoji: '🧹', completedAt: daysAgo(1) },
+{ id: 102, taskId: 2, taskName: '수건 및 속옷 빨래', emoji: '🧺', completedAt: daysAgo(3) },
+{ id: 103, taskId: 1, taskName: '화장실 물때 청소', emoji: '🚽', completedAt: daysAgo(8) },
+];
+
+const PARTNERS = [
+{ id: 1, name: '뽀송 세탁특공대', category: '세탁/수거', rating: 4.9, reviews: 1240, tags: ['문앞수거', '친환경세제'] },
+{ id: 2, name: '클린 어벤져스', category: '종합 청소', rating: 4.8, reviews: 856, tags: ['원룸특화', '대청소'] },
+{ id: 3, name: '쓰레기 헌터', category: '폐기물/음식물', rating: 4.7, reviews: 430, tags: ['정기구독', '야간수거'] },
+];
+
+const COMMUNITY_POSTS = [
+{ id: 1, title: '장마철 꿉꿉한 수건 냄새, 식초 한 스푼의 기적✨', author: '자취9단', likes: 142, comments: 24 },
+{ id: 2, title: '다이소 꿀템으로 화장실 거울 물때 완벽 제거법', author: '클린보이', likes: 89, comments: 12 },
+{ id: 3, title: '음식물 쓰레기 얼려두면 안 되는 이유... (충격)', author: '초보자취생', likes: 56, comments: 30 },
+];
+
+// --- 배민 메인 컬러 ---
+const BAEMIN_COLOR = '#2ac1bc';
+
+export default function BosongManagerApp() {
+const [activeTab, setActiveTab] = useState('dashboard');
+const [tasks, setTasks] = useState(INITIAL_TASKS);
+const [history, setHistory] = useState(INITIAL_HISTORY);
+
+// --- 액션 핸들러 ---
+const handleCompleteTask = (task) => {
+const now = new Date().toISOString();
+
+// 상태 업데이트 (주기 초기화)
+setTasks(prev => prev.map(t => t.id === task.id ? { ...t, lastCleanedDate: now } : t));
+
+// 히스토리 추가
+setHistory(prev => [{
+id: Date.now(),
+taskId: task.id,
+taskName: task.name,
+emoji: task.emoji,
+completedAt: now
+}, ...prev]);
+};
+
+const handleDeleteHistory = (id) => {
+setHistory(prev => prev.filter(h => h.id !== id));
+};
+
+return (
+<div className="flex justify-center bg-gray-100 min-h-screen font-sans">
+    {/* 모바일 뷰포트 컨테이너 */}
+    <div className="w-full max-w-md bg-gray-50 flex flex-col relative h-screen shadow-2xl overflow-hidden sm:rounded-2xl sm:h-[90vh] sm:mt-[5vh]">
+
+        {/* 헤더 */}
+        <header style={{ backgroundColor: BAEMIN_COLOR }} className="text-white p-4 flex justify-between items-center shadow-md z-10">
+            <div>
+                <h1 className="text-xl font-extrabold tracking-tight flex items-center gap-2">
+                    <span className="text-2xl">🧹</span> 보송 매니저
+                </h1>
+                <p className="text-xs opacity-90 mt-1 font-medium">지친 하루의 끝, 조금 더 보송하게</p>
+            </div>
+        </header>
+
+        {/* 메인 콘텐츠 영역 */}
+        <main className="flex-1 overflow-y-auto pb-20 no-scrollbar">
+            {activeTab === 'dashboard' && <TabDashboard tasks={tasks} onComplete={handleCompleteTask} />}
+            {activeTab === 'history' && <TabHistory history={history} onDelete={handleDeleteHistory} />}
+            {activeTab === 'partners' && <TabPartners tasks={tasks} />}
+            {activeTab === 'lounge' && <TabLounge />}
+        </main>
+
+        {/* 하단 네비게이션 바 */}
+        <nav className="absolute bottom-0 w-full bg-white border-t border-gray-200 flex justify-around pb-safe pt-2 pb-4 px-2 z-20">
+            <NavItem icon={<Home size={24} />} label="대시보드" isActive={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
+            <NavItem icon={<History size={24} />} label="청소발자국" isActive={activeTab === 'history'} onClick={() => setActiveTab('history')} />
+            <NavItem icon={<Store size={24} />} label="파트너스" isActive={activeTab === 'partners'} onClick={() => setActiveTab('partners')} />
+            <NavItem icon={<MessageCircle size={24} />} label="라운지" isActive={activeTab === 'lounge'} onClick={() => setActiveTab('lounge')} />
+        </nav>
+
+        {/* 커스텀 스타일 (흔들림 애니메이션 등) */}
+        <style dangerouslySetInnerHTML={{__html: `
+               @keyframes subtle-shake {
+               0%, 100% { transform: translateX(0); }
+               25% { transform: translateX(-2px); }
+               75% { transform: translateX(2px); }
+               }
+               .animate-subtle-shake {
+               animation: subtle-shake 0.4s ease-in-out infinite;
+               }
+               .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+               .no-scrollbar::-webkit-scrollbar { display: none; }
+               .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+               `}} />
+    </div>
+</div>
+);
+}
+
+// ==========================================
+// 탭 1: 대시보드 (주기 관리)
+// ==========================================
+function TabDashboard({ tasks, onComplete }) {
+const sortedTasks = useMemo(() => {
+return [...tasks].sort((a, b) => {
+const aElapsed = getDaysElapsed(a.lastCleanedDate) / a.targetDays;
+const bElapsed = getDaysElapsed(b.lastCleanedDate) / b.targetDays;
+return bElapsed - aElapsed; // 위험도가 높은 순으로 정렬
+});
+}, [tasks]);
+
+return (
+<div className="p-4 space-y-4">
+    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-start gap-3">
+        <div className="bg-blue-50 p-2 rounded-full text-blue-500">
+            <CalendarDays size={20} />
+        </div>
+        <div>
+            <h2 className="text-sm font-bold text-gray-800">김보송님의 이번 주 가사 상태</h2>
+            <p className="text-xs text-gray-500 mt-1">주기가 임박한 청소부터 먼저 해치워볼까요?</p>
+        </div>
+    </div>
+
+    <div className="space-y-3">
+        {sortedTasks.map(task => {
+        const daysElapsed = getDaysElapsed(task.lastCleanedDate);
+        const ratio = daysElapsed / task.targetDays;
+
+        let status = 'stable';
+        if (ratio >= 1) status = 'overdue';
+        else if (ratio >= 0.7) status = 'imminent';
+
+        const statusStyles = {
+        stable: "bg-white border-gray-200",
+        imminent: "bg-yellow-50 border-yellow-300",
+        overdue: "bg-red-50 border-red-400 animate-subtle-shake shadow-md"
+        };
+
+        const textStyles = {
+        stable: "text-gray-500",
+        imminent: "text-yellow-700",
+        overdue: "text-red-600 font-bold"
+        };
+
+        return (
+        <div key={task.id} className={`p-4 rounded-2xl border transition-all ${statusStyles[status]}`}>
+            <div className="flex justify-between items-center mb-2">
+                <div className="flex items-center gap-3">
+                    <span className="text-3xl">{task.emoji}</span>
+                    <div>
+                        <h3 className="font-bold text-gray-800">{task.name}</h3>
+                        <p className={`text-xs mt-0.5 flex items-center gap-1 ${textStyles[status]}`}>
+                            {status === 'overdue' && <AlertTriangle size={12} />}
+                            목표 주기: {task.targetDays}일 / <span className="font-semibold">경과: {daysElapsed}일째</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* 진행률 바 */}
+            <div className="w-full bg-gray-200 rounded-full h-1.5 mb-4 overflow-hidden">
+                <div
+                        className={`h-1.5 rounded-full ${status === 'overdue' ? 'bg-red-500' : status === 'imminent' ? 'bg-yellow-400' : 'bg-green-400'}`}
+                style={{ width: `${Math.min((ratio) * 100, 100)}%` }}
+                ></div>
+        </div>
+
+        <div className="flex gap-2">
+            <button
+                    onClick={() => onComplete(task)}
+            className={`flex-1 py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-1 transition-colors
+            ${status === 'stable' ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' :
+            status === 'imminent' ? 'bg-yellow-400 text-yellow-900 hover:bg-yellow-500' :
+            'bg-red-500 text-white hover:bg-red-600'}`}
+            >
+            <CheckCircle2 size={16} /> 완료했어요
+            </button>
+
+            {/* B마트 시너지 (초과 상태일 때만 노출) */}
+            {status === 'overdue' && (
+            <button className="flex items-center justify-center px-3 bg-white border border-gray-300 rounded-lg text-xs font-bold text-gray-700 hover:bg-gray-50 flex-shrink-0">
+                <ShoppingBag size={14} className="mr-1 text-[#2ac1bc]" /> B마트 구매
+            </button>
+            )}
+        </div>
+    </div>
+    );
+    })}
+</div>
+</div>
+);
+}
+
+// ==========================================
+// 탭 2: 청소 발자국 (기록 관리)
+// ==========================================
+function TabHistory({ history, onDelete }) {
+return (
+<div className="p-4">
+    <div className="flex justify-between items-center mb-4">
+        <h2 className="font-bold text-lg text-gray-800">나의 청소 발자국 🐾</h2>
+        <button className="text-gray-500 flex items-center gap-1 text-sm bg-gray-100 px-2 py-1 rounded-md">
+            <Filter size={14} /> 필터
+        </button>
+    </div>
+
+    <div className="relative border-l-2 border-gray-200 ml-3 space-y-6">
+        {history.length === 0 ? (
+        <div className="text-center py-10 text-gray-400 text-sm">아직 기록이 없습니다.<br/>대시보드에서 청소를 완료해보세요!</div>
+        ) : (
+        history.map((record) => (
+        <div key={record.id} className="relative pl-6">
+              <span className="absolute -left-[17px] top-1 bg-white border-2 border-[#2ac1bc] text-lg rounded-full w-8 h-8 flex items-center justify-center shadow-sm">
+                {record.emoji}
+              </span>
+            <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex justify-between items-start">
+                <div>
+                    <h3 className="font-bold text-gray-800 text-sm">{record.taskName}</h3>
+                    <p className="text-xs text-gray-500 mt-1">{formatDate(record.completedAt)} 완료</p>
+                </div>
+                <button
+                        onClick={() => onDelete(record.id)}
+                className="p-1 text-gray-400 hover:text-red-500 rounded transition-colors"
+                >
+                <Trash2 size={16} />
+                </button>
+            </div>
+        </div>
+        ))
+        )}
+    </div>
+</div>
+);
+}
+
+// ==========================================
+// 탭 3: 보송 파트너스 (O2O 연계)
+// ==========================================
+function TabPartners({ tasks }) {
+const [selectedPartner, setSelectedPartner] = useState(null);
+
+return (
+<div className="p-4 space-y-4">
+    <div className="bg-[#2ac1bc]/10 p-4 rounded-xl border border-[#2ac1bc]/20">
+        <h2 className="font-bold text-[#2ac1bc] flex items-center gap-1"><Store size={18} /> 보송 파트너스</h2>
+        <p className="text-xs text-gray-600 mt-1">내가 설정한 주기에 맞춰 알아서 방문하는 스마트 구독 서비스!</p>
+    </div>
+
+    <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+        {['전체', '세탁/수거', '종합 청소', '폐기물'].map((cat, i) => (
+        <button key={cat} className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap ${i === 0 ? 'bg-gray-800 text-white' : 'bg-white border border-gray-200 text-gray-600'}`}>
+        {cat}
+        </button>
+        ))}
+    </div>
+
+    <div className="space-y-3 mt-2">
+        {PARTNERS.map(partner => (
+        <div key={partner.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-3">
+            <div className="flex justify-between items-start">
+                <div>
+                    <span className="text-[10px] font-bold text-[#2ac1bc] bg-[#2ac1bc]/10 px-2 py-0.5 rounded-md mb-1 inline-block">{partner.category}</span>
+                    <h3 className="font-bold text-gray-800">{partner.name}</h3>
+                    <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                        <Star size={12} className="text-yellow-400 fill-current" />
+                        <span className="font-bold text-gray-700">{partner.rating}</span>
+                        <span>({partner.reviews}+)</span>
+                    </div>
+                </div>
+                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-xl">
+                    {partner.category.includes('세탁') ? '🧺' : partner.category.includes('종합') ? '✨' : '🗑️'}
+                </div>
+            </div>
+
+            <div className="flex flex-wrap gap-1">
+                {partner.tags.map(tag => (
+                <span key={tag} className="text-[10px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-sm">#{tag}</span>
+                ))}
+            </div>
+
+            <button
+                    onClick={() => setSelectedPartner(partner)}
+            className="w-full mt-1 py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-sm font-bold text-gray-700 transition-colors"
+            >
+            구독/수거 신청하기
+            </button>
+        </div>
+        ))}
+    </div>
+
+    {/* 스마트 요구서 모달 */}
+    {selectedPartner && (
+    <div className="absolute inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
+        <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 shadow-2xl transform transition-transform animate-in slide-in-from-bottom-10">
+            <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold text-lg text-gray-800">스마트 구독 요구서</h3>
+                <button onClick={() => setSelectedPartner(null)} className="p-1 text-gray-400 hover:text-gray-800"><X size={20} /></button>
+            </div>
+
+            <p className="text-sm text-gray-600 mb-4">
+                <strong>{selectedPartner.name}</strong> 파트너에게 나의 청소 주기를 전달하여 맞춤형 정기 서비스를 제안받습니다.
+            </p>
+
+            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-6">
+                <h4 className="text-xs font-bold text-gray-500 mb-2">나의 주기에 맞춘 추천 설정</h4>
+                <ul className="space-y-2">
+                    {tasks.slice(0, 2).map(task => ( // 예시로 상위 2개 태스크만 연동 보여줌
+                    <li key={task.id} className="flex justify-between text-sm items-center bg-white p-2 rounded shadow-sm border border-gray-100">
+                        <span className="flex items-center gap-2"><span className="text-lg">{task.emoji}</span> {task.name}</span>
+                        <span className="font-bold text-[#2ac1bc]">{task.targetDays}일 마다</span>
+                    </li>
+                    ))}
+                </ul>
+                <p className="text-[10px] text-gray-400 mt-2">* 대시보드에 설정된 주기를 기본값으로 불러왔습니다.</p>
+            </div>
+
+            <button
+                    onClick={() => {
+            alert('배달의민족 결제/예약 시스템으로 이동합니다!');
+            setSelectedPartner(null);
+            }}
+            style={{ backgroundColor: BAEMIN_COLOR }}
+            className="w-full py-3.5 rounded-xl font-bold text-white text-base shadow-md"
+            >
+            이대로 맞춤 구독 시작하기
+            </button>
+        </div>
+    </div>
+    )}
+</div>
+);
+}
+
+// ==========================================
+// 탭 4: 보송 라운지 (커뮤니티)
+// ==========================================
+function TabLounge() {
+return (
+<div className="p-4 space-y-6">
+    {/* 이달의 잇템 배너 (B마트 연계) */}
+    <div className="bg-gradient-to-r from-blue-500 to-[#2ac1bc] rounded-xl p-4 text-white shadow-md relative overflow-hidden cursor-pointer hover:opacity-95 transition-opacity">
+        <div className="relative z-10 w-2/3">
+            <span className="bg-white/20 text-xs font-bold px-2 py-1 rounded mb-2 inline-block">이달의 B마트 잇템</span>
+            <h2 className="font-bold text-lg leading-tight mb-1">장마철 꿉꿉함 타파!<br/>실내건조용 세탁세제 기획전</h2>
+            <p className="text-xs text-white/80">지금 주문하면 15분 내 도착 🚀</p>
+        </div>
+        <div className="absolute -right-4 -bottom-4 text-8xl opacity-20">☔️</div>
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg transform rotate-12">
+            <span className="text-3xl">🧴</span>
+        </div>
+    </div>
+
+    {/* 커뮤니티 게시판 */}
+    <div>
+        <div className="flex justify-between items-end mb-3">
+            <h2 className="font-bold text-gray-800">자취생 꿀팁 공유소 💡</h2>
+            <button className="text-xs font-bold text-[#2ac1bc] flex items-center">더보기 <ChevronRight size={14}/></button>
+        </div>
+
+        <div className="space-y-3">
+            {COMMUNITY_POSTS.map(post => (
+            <div key={post.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors">
+                <h3 className="font-bold text-gray-800 text-sm mb-2 leading-snug">{post.title}</h3>
+                <div className="flex justify-between items-center text-xs text-gray-500">
+                    <span>{post.author}</span>
+                    <div className="flex gap-3">
+                        <span className="flex items-center gap-1">❤️ {post.likes}</span>
+                        <span className="flex items-center gap-1">💬 {post.comments}</span>
+                    </div>
+                </div>
+            </div>
+            ))}
+        </div>
+
+        <button className="w-full mt-4 py-3 bg-gray-50 border border-gray-200 border-dashed rounded-xl text-gray-600 font-bold text-sm hover:bg-gray-100 transition-colors">
+            + 나만의 꿀팁 작성하기
+        </button>
+    </div>
+</div>
+);
+}
+
+// --- 하단 네비게이션 아이템 컴포넌트 ---
+function NavItem({ icon, label, isActive, onClick }) {
+return (
+<button
+        onClick={onClick}
+        className={`flex flex-col items-center justify-center w-16 transition-colors duration-200 ${isActive ? 'text-[#2ac1bc]' : 'text-gray-400 hover:text-gray-600'}`}
+>
+<div className={`mb-1 transition-transform duration-200 ${isActive ? 'transform scale-110' : ''}`}>
+{icon}
+</div>
+<span className={`text-[10px] font-bold ${isActive ? 'text-[#2ac1bc]' : 'text-gray-500'}`}>{label}</span>
+</button>
+);
+}
