@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>클린루프 통합 프로토타입</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell" role="application" aria-label="클린루프">
+      <header class="app-header">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" width="24" height="24">
+              <path d="M16 4c6.7 0 12 5.3 12 12s-5.3 12-12 12S4 22.7 4 16 9.3 4 16 4Z" fill="currentColor" opacity=".18" />
+              <path d="M10 16.4 14.1 20 22 11.6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+          <div>
+            <div class="brand-title">클린루프</div>
+            <div class="brand-sub">상태가 알려주고, 해결까지</div>
+          </div>
+        </div>
+        <button class="icon-button" type="button" id="notificationButton" aria-label="알림">
+          <span class="alert-dot" id="alertDot"></span>
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+            <path d="M6.5 10.4a5.5 5.5 0 0 1 11 0v3.5l1.7 2.8a1 1 0 0 1-.8 1.5H5.6a1 1 0 0 1-.8-1.5l1.7-2.8v-3.5Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" />
+            <path d="M9.8 20a2.3 2.3 0 0 0 4.4 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
+        </button>
+      </header>
+
+      <main class="views" id="views">
+        <section class="view active" id="view-home" aria-labelledby="homeTitle">
+          <div class="home-hero">
+            <div>
+              <p class="eyebrow">2026년 7월 9일 목요일</p>
+              <h1 id="homeTitle">오늘은 욕실과 수거만 먼저 볼게요.</h1>
+              <p class="hero-copy">밀린 항목을 작게 나누고, 직접 해결과 맡기기를 같은 자리에서 고를 수 있어요.</p>
+            </div>
+            <div class="hero-meter" aria-label="이번 주 진행률">
+              <svg viewBox="0 0 86 86" width="86" height="86" aria-hidden="true">
+                <circle cx="43" cy="43" r="35" class="meter-bg" />
+                <circle cx="43" cy="43" r="35" class="meter-fg" id="weeklyMeter" />
+              </svg>
+              <strong id="weeklyMeterText">4/6</strong>
+            </div>
+          </div>
+
+          <section class="section">
+            <div class="section-head">
+              <h2>이번 주 상태</h2>
+              <span class="muted" id="weeklySummary">2개 확인</span>
+            </div>
+            <div class="status-grid" id="statusGrid"></div>
+          </section>
+
+          <section class="section">
+            <div class="section-head">
+              <h2>지금 확인할 항목</h2>
+              <button class="text-button" type="button" data-view-link="routine">전체 보기</button>
+            </div>
+            <div class="stack" id="urgentList"></div>
+          </section>
+
+          <section class="section" id="bookingSection">
+            <div class="section-head">
+              <h2>예약 현황</h2>
+            </div>
+            <div class="stack" id="bookingList"></div>
+          </section>
+
+          <section class="section">
+            <div class="section-head">
+              <h2>10분 안에 가능한 청소</h2>
+            </div>
+            <div class="quick-row" id="quickTasks"></div>
+          </section>
+        </section>
+
+        <section class="view" id="view-solve" aria-labelledby="solveTitle">
+          <div class="page-title">
+            <p class="eyebrow">해결과 예약</p>
+            <h1 id="solveTitle">문제에서 바로 견적까지 이어요.</h1>
+            <p class="page-copy">카테고리를 고르면 가이드, 준비물, 전문가 예약을 같은 흐름에서 볼 수 있어요.</p>
+          </div>
+          <div class="service-grid" id="serviceGrid"></div>
+          <section class="section">
+            <div class="section-head">
+              <h2>청소템 추천</h2>
+              <button class="text-button" type="button" id="openAllProducts">전체 보기</button>
+            </div>
+            <div class="product-strip" id="productStrip"></div>
+          </section>
+        </section>
+
+        <section class="view" id="view-routine" aria-labelledby="routineTitle">
+          <div class="page-title">
+            <p class="eyebrow">주기 보드</p>
+            <h1 id="routineTitle">전체 관리 현황</h1>
+          </div>
+          <div class="filter-row" id="routineFilters"></div>
+          <div class="stack" id="routineList"></div>
+        </section>
+
+        <section class="view" id="view-community" aria-labelledby="communityTitle">
+          <div class="page-title">
+            <p class="eyebrow">커뮤니티</p>
+            <h1 id="communityTitle">검수된 가이드와 생활 질문을 나눠요.</h1>
+          </div>
+          <div class="segmented" role="tablist" aria-label="커뮤니티 분류">
+            <button type="button" class="segment active" data-community-tab="guide">가이드</button>
+            <button type="button" class="segment" data-community-tab="qa">Q&amp;A</button>
+            <button type="button" class="segment" data-community-tab="talk">잡담</button>
+          </div>
+          <div class="stack" id="communityList"></div>
+        </section>
+
+        <section class="view" id="view-my" aria-labelledby="myTitle">
+          <div class="profile-band">
+            <div class="avatar" aria-hidden="true">보</div>
+            <div>
+              <p class="eyebrow">김보송님의 집</p>
+              <h1 id="myTitle">청소발자국</h1>
+              <p class="page-copy">직접 해결, 청소템 확인, 예약 완료 기록을 한곳에 모아요.</p>
+            </div>
+          </div>
+
+          <section class="stats-grid" id="myStats"></section>
+
+          <section class="section">
+            <div class="section-head">
+              <h2>최근 12주</h2>
+              <span class="muted">진한 칸일수록 완료 기록이 많아요</span>
+            </div>
+            <div class="footprint-grid" id="footprintGrid"></div>
+          </section>
+
+          <section class="section">
+            <div class="section-head">
+              <h2>히스토리</h2>
+            </div>
+            <div class="stack" id="historyList"></div>
+          </section>
+
+          <section class="section">
+            <div class="section-head">
+              <h2>공동 가구</h2>
+            </div>
+            <div class="stack" id="memberList"></div>
+          </section>
+        </section>
+      </main>
+
+      <nav class="tabbar" aria-label="하단 네비게이션">
+        <button class="tab-button active" type="button" data-view="home" aria-current="page">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1v-8.5Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /></svg>
+          <span>홈</span>
+        </button>
+        <button class="tab-button" type="button" data-view="solve">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M6 13c4-1.1 6-3.1 7-7 2 4 4 5.9 7 7-4 1.1-6 3.1-7 7-1-4-3-5.9-7-7Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /></svg>
+          <span>해결</span>
+        </button>
+        <button class="tab-button" type="button" data-view="routine">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M7 4v3M17 4v3M5 9h14M6 6h12a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+          <span>주기</span>
+        </button>
+        <button class="tab-button" type="button" data-view="community">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M6 7.5h12M6 12h12M6 16.5h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /><path d="M4 4.5h16v15H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /></svg>
+          <span>커뮤니티</span>
+        </button>
+        <button class="tab-button" type="button" data-view="my">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="8.3" r="3.6" fill="none" stroke="currentColor" stroke-width="2" /><path d="M5 20c1.2-3.4 3.9-5 7-5s5.8 1.6 7 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+          <span>마이</span>
+        </button>
+      </nav>
+
+      <div class="sheet-backdrop" id="sheetBackdrop" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+        <section class="sheet-panel">
+          <header class="sheet-header">
+            <div>
+              <p class="eyebrow" id="sheetStep">클린루프</p>
+              <h2 id="sheetTitle">상세</h2>
+              <p class="sheet-sub" id="sheetSub"></p>
+            </div>
+            <button class="icon-button" type="button" id="sheetClose" aria-label="닫기">
+              <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+            </button>
+          </header>
+          <div class="sheet-body" id="sheetBody"></div>
+        </section>
+      </div>
+
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
