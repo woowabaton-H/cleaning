@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>보송 매니저</title>
+<link rel="stylesheet" as="style" crossorigin
+  href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" />
+<style>
+  :root{
+    --blue:#3182F6; --blue-dark:#2272EB; --blue-tint:#EBF2FF; --blue-tint-2:#F5F9FF;
+    --ink:#191F28; --ink-2:#4E5968; --gray:#8B95A1; --gray-line:#E5E8EB; --surface:#F2F4F6;
+    --green:#00C880; --green-tint:#E6FBF3;
+    --amber:#FFB800; --amber-tint:#FFF6DE;
+    --blush:#FF8FA3; --blush-tint:#FFF0F3;
+    --white:#FFFFFF;
+    --radius-lg:24px; --radius-md:16px; --radius-sm:12px;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; background:#E7ECF2; font-family:'PretendardVariable',-apple-system,'Apple SD Gothic Neo',sans-serif; color:var(--ink); -webkit-font-smoothing:antialiased; }
+  button{ font-family:inherit; }
+  ul{ list-style:none; }
+
+  .stage{ min-height:100vh; display:flex; justify-content:center; }
+
+  .frame{
+    position:relative;
+    width:430px; max-width:100vw;
+    height:100vh;
+    background:var(--white);
+    overflow:hidden;
+    box-shadow: 0 0 0 1px var(--gray-line), 0 30px 60px -20px rgba(20,30,50,0.18);
+  }
+  @media (min-width:431px){ .frame{ margin-top:18px; height:calc(100vh - 36px); border-radius:32px; } }
+
+  .scroll{ position:relative; height:100%; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  .scroll::-webkit-scrollbar{ display:none; }
+
+  .panel{ padding:20px 18px 12px; }
+  .panel.hidden{ display:none; }
+
+  /* ---------- shared bits ---------- */
+  .eyebrow{ font-size:13px; font-weight:700; color:var(--gray); margin-bottom:4px; }
+  .h1{ font-size:20px; font-weight:800; letter-spacing:-0.01em; }
+  .h2{ font-size:16px; font-weight:800; }
+  .sub{ font-size:12.5px; color:var(--gray); font-weight:600; margin-top:2px; }
+  .desc{ font-size:13px; color:var(--ink-2); line-height:1.55; }
+
+  .section-head{ display:flex; justify-content:space-between; align-items:flex-end; margin:26px 0 12px; }
+  .section-head .h2{ font-size:15.5px; }
+  .section-head .sub{ margin-top:0; }
+
+  .card{ background:var(--white); border:1px solid var(--gray-line); border-radius:var(--radius-md); padding:16px; }
+  .card + .card{ margin-top:10px; }
+
+  .badge{ display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:999px; font-size:11.5px; font-weight:800; }
+  .badge.late{ color:#D6336C; background:var(--blush-tint); }
+  .badge.soon{ color:#A97400; background:var(--amber-tint); }
+  .badge.good{ color:#059669; background:var(--green-tint); }
+
+  .btn{ display:inline-flex; align-items:center; justify-content:center; gap:6px; border:0; border-radius:14px; padding:12px 16px; font-weight:800; font-size:14px; cursor:pointer; }
+  .btn.primary{ background:var(--blue); color:#fff; }
+  .btn.secondary{ background:var(--blue-tint); color:var(--blue-dark); }
+  .btn.ghost{ background:var(--surface); color:var(--ink-2); }
+  .btn.block{ width:100%; }
+  .btn.sm{ padding:9px 12px; font-size:12.5px; border-radius:10px; }
+
+  /* ---------- mascot ---------- */
+  .mascot svg{ display:block; }
+
+  /* ================= HOME ================= */
+  .home-top-row{ display:flex; justify-content:space-between; align-items:flex-start; }
+  .greet-name{ font-size:19px; font-weight:800; margin-top:2px; }
+  .bell-btn{ all:unset; cursor:pointer; width:38px; height:38px; border-radius:50%; background:var(--surface); display:flex; align-items:center; justify-content:center; }
+
+  .home-hero-card{ margin-top:16px; background:linear-gradient(135deg,var(--blue-tint-2),var(--blue-tint)); border-radius:var(--radius-lg); padding:18px; display:flex; gap:12px; align-items:center; }
+  .home-hero-text{ font-size:13.5px; font-weight:700; color:var(--ink); line-height:1.5; }
+  .home-hero-text b{ color:var(--blue-dark); }
+
+  .stamp-card{ margin-top:18px; }
+  .stamp-row{ display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin-top:12px; }
+  .stamp{ display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; background:none; border:0; }
+  .stamp-circle{ width:44px; height:44px; border-radius:50%; display:grid; place-items:center; }
+  .stamp-circle.good{ background:var(--green-tint); border:1.5px solid var(--green); }
+  .stamp-circle.soon{ background:var(--amber-tint); border:1.5px solid var(--amber); }
+  .stamp-circle.late{ background:var(--white); border:1.5px dashed var(--blush); }
+  .stamp-label{ font-size:10.5px; font-weight:700; color:var(--ink-2); }
+
+  .issue-card{ display:flex; gap:12px; align-items:flex-start; cursor:pointer; }
+  .issue-card .ic{ width:40px; height:40px; border-radius:12px; background:var(--blush-tint); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .issue-card-body{ flex:1; }
+  .issue-card-title{ font-size:14px; font-weight:800; }
+  .issue-card-copy{ font-size:12.5px; color:var(--ink-2); margin-top:2px; line-height:1.5; }
+  .issue-card-arrow{ color:var(--gray); flex-shrink:0; margin-top:4px; }
+
+  .quick-row{ display:flex; gap:10px; overflow-x:auto; padding-bottom:2px; }
+  .quick-chip{ flex-shrink:0; background:var(--surface); border-radius:var(--radius-sm); padding:12px 14px; min-width:118px; }
+  .quick-chip .qt{ font-size:12.5px; font-weight:800; }
+  .quick-chip .qs{ font-size:11px; color:var(--gray); font-weight:600; margin-top:3px; }
+
+  .commerce-mini{ display:flex; justify-content:space-between; align-items:center; }
+  .commerce-mini-name{ font-size:13px; font-weight:800; }
+  .commerce-mini-sub{ font-size:11.5px; color:var(--gray); font-weight:600; margin-top:2px; }
+
+  .done-row{ display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--gray-line); }
+  .done-row:last-child{ border-bottom:0; }
+  .done-name{ font-size:13px; font-weight:700; }
+  .done-date{ font-size:11.5px; color:var(--gray); font-weight:600; }
+
+  /* ================= CLEAN (category grid) ================= */
+  .cat-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:14px; }
+  .cat-card{ background:var(--white); border:1px solid var(--gray-line); border-radius:var(--radius-md); padding:16px; text-align:left; cursor:pointer; }
+  .cat-icon{ width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center; margin-bottom:10px; }
+  .cat-name{ font-size:14px; font-weight:800; }
+  .cat-issues{ font-size:11.5px; color:var(--gray); font-weight:600; margin-top:3px; }
+  .cat-status{ margin-top:10px; }
+
+  /* ================= BOARD ================= */
+  .chip-row{ display:flex; gap:8px; overflow-x:auto; margin-top:14px; padding-bottom:2px; }
+  .chip{ flex-shrink:0; border:1px solid var(--gray-line); background:var(--white); color:var(--ink-2); border-radius:999px; padding:8px 14px; font-weight:700; font-size:12.5px; cursor:pointer; }
+  .chip.active{ background:var(--ink); color:#fff; border-color:var(--ink); }
+
+  .board-row{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  .board-row-left{ flex:1; }
+  .board-row-name{ font-size:14px; font-weight:800; }
+  .board-row-meta{ font-size:11.5px; color:var(--gray); font-weight:600; margin-top:3px; }
+  .board-actions{ display:flex; gap:6px; }
+
+  /* ================= COMMERCE ================= */
+  .kit-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:14px; }
+  .kit-card{ border:1px solid var(--gray-line); border-radius:var(--radius-md); overflow:hidden; }
+  .kit-thumb{ height:96px; display:flex; align-items:center; justify-content:center; }
+  .kit-body{ padding:12px; }
+  .kit-name{ font-size:13px; font-weight:800; line-height:1.4; }
+  .kit-price{ font-size:13.5px; font-weight:800; margin-top:6px; }
+  .kit-price span{ font-size:11px; color:var(--gray); font-weight:600; }
+  .kit-add{ width:100%; margin-top:9px; }
+
+  /* ================= MY ================= */
+  .my-header{ display:flex; align-items:center; gap:12px; padding:6px 0 18px; }
+  .my-avatar{ width:52px; height:52px; border-radius:50%; background:var(--blue-tint); display:flex; align-items:center; justify-content:center; }
+  .my-list-item{ display:flex; justify-content:space-between; align-items:center; padding:15px 2px; border-bottom:1px solid var(--gray-line); cursor:pointer; }
+  .my-list-item:last-child{ border-bottom:0; }
+  .my-list-label{ font-size:14px; font-weight:700; }
+
+  /* ================= BOTTOM NAV ================= */
+  .bottom-nav{ position:sticky; bottom:0; left:0; right:0; background:rgba(255,255,255,0.94); backdrop-filter:blur(10px); border-top:1px solid var(--gray-line); display:flex; padding:8px 4px calc(8px + env(safe-area-inset-bottom)); z-index:20; }
+  .nav-item{ all:unset; flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; color:var(--gray); padding:4px 0; }
+  .nav-item.active{ color:var(--blue); }
+  .nav-item span{ font-size:10.5px; font-weight:700; }
+
+  /* ================= OVERLAY (flow) ================= */
+  .overlay{ position:absolute; inset:0; background:var(--white); transform:translateX(100%); transition:transform 0.32s cubic-bezier(.22,.68,0,1.01); z-index:40; display:flex; flex-direction:column; }
+  .overlay.open{ transform:translateX(0); }
+  .overlay-top{ display:flex; align-items:center; gap:12px; padding:16px 18px; border-bottom:1px solid var(--gray-line); flex-shrink:0; }
+  .overlay-back{ all:unset; cursor:pointer; width:34px; height:34px; display:flex; align-items:center; justify-content:center; border-radius:50%; background:var(--surface); }
+  .overlay-title{ font-size:15px; font-weight:800; }
+  .overlay-step{ font-size:11.5px; color:var(--gray); font-weight:700; }
+  .overlay-body{ flex:1; overflow-y:auto; padding:20px 18px 28px; }
+
+  .issue-list .issue-card{ padding:14px; border:1px solid var(--gray-line); border-radius:var(--radius-md); margin-bottom:10px; }
+
+  .guide-meta{ display:flex; gap:8px; margin:4px 0 18px; }
+  .guide-block{ margin-bottom:18px; }
+  .guide-block-label{ font-size:12px; font-weight:800; color:var(--blue-dark); margin-bottom:6px; }
+  .guide-steps{ display:grid; gap:8px; }
+  .guide-step{ display:flex; gap:10px; font-size:13px; color:var(--ink-2); line-height:1.5; }
+  .guide-step .num{ width:20px; height:20px; border-radius:50%; background:var(--blue-tint); color:var(--blue-dark); font-size:11px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .caution-box{ background:var(--blush-tint); border-radius:var(--radius-sm); padding:12px 14px; font-size:12.5px; color:#B03A5B; font-weight:700; line-height:1.5; }
+  .guide-cta{ display:flex; gap:8px; margin-top:22px; }
+
+  .compare-section-label{ font-size:12.5px; font-weight:800; color:var(--gray); margin:18px 0 10px; }
+  .compare-card{ border:1px solid var(--gray-line); border-radius:var(--radius-md); padding:14px; }
+  .compare-top{ display:flex; justify-content:space-between; align-items:flex-start; }
+  .compare-name{ font-size:14px; font-weight:800; }
+  .compare-price{ font-size:14px; font-weight:800; }
+  .compare-meta{ font-size:12px; color:var(--gray); font-weight:600; margin-top:4px; line-height:1.5; }
+
+  .complete-wrap{ display:flex; flex-direction:column; align-items:center; text-align:center; padding-top:36px; }
+  .complete-title{ font-size:18px; font-weight:800; margin-top:18px; }
+  .complete-sub{ font-size:13px; color:var(--ink-2); margin-top:8px; line-height:1.6; }
+  .complete-toast{ margin-top:22px; width:100%; background:var(--green-tint); border:1px solid #C9F3E1; border-radius:var(--radius-md); padding:14px 16px; text-align:left; }
+  .complete-toast b{ display:block; font-size:13px; font-weight:800; }
+  .complete-toast span{ font-size:12px; color:var(--ink-2); font-weight:600; }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="frame">
+    <div class="scroll" id="scroll">
+
+      <!-- ================= HOME ================= -->
+      <section class="panel" id="panel-home">
+        <div class="home-top-row">
+          <div>
+            <div class="eyebrow">좋은 아침이에요</div>
+            <div class="greet-name">보송님 👋</div>
+          </div>
+          <button class="bell-btn">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M6 10a6 6 0 0 1 12 0c0 4 1.5 5.5 2 6H4c.5-.5 2-2 2-6Z" stroke="#191F28" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 19a2 2 0 0 0 4 0" stroke="#191F28" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+
+        <div class="home-hero-card">
+          <svg class="mascot" width="52" height="52" viewBox="0 0 120 120"><circle cx="60" cy="64" r="42" fill="#3182F6"/><circle cx="48" cy="56" r="5.5" fill="#fff"/><circle cx="72" cy="56" r="5.5" fill="#fff"/><circle cx="48" cy="57.5" r="2.4" fill="#191F28"/><circle cx="72" cy="57.5" r="2.4" fill="#191F28"/><path d="M46 70 Q60 80 74 70" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/></svg>
+          <div class="home-hero-text">이번 주는 <b>욕실과 수거</b>만<br>챙기면 충분해요.</div>
+        </div>
+
+        <div class="section-head"><div class="h2">이번 주 보송 스탬프</div></div>
+        <div class="stamp-row" id="homeStampRow"></div>
+
+        <div class="section-head"><div class="h2">지금 확인할 항목</div></div>
+        <div id="homeIssueList"></div>
+
+        <div class="section-head"><div class="h2">10분 안에 가능한 청소</div></div>
+        <div class="quick-row">
+          <div class="quick-chip"><div class="qt">배수구 머리카락 정리</div><div class="qs">주방 · 5분</div></div>
+          <div class="quick-chip"><div class="qt">변기 얼룩 닦기</div><div class="qs">욕실 · 5분</div></div>
+          <div class="quick-chip"><div class="qt">현관 먼지 쓸기</div><div class="qs">바닥 · 5분</div></div>
+        </div>
+
+        <div class="section-head"><div class="h2">곧 필요한 소모품</div></div>
+        <div class="card commerce-mini">
+          <div><div class="commerce-mini-name">수세미 교체</div><div class="commerce-mini-sub">교체 시점이 가까워졌어요</div></div>
+          <button class="btn secondary sm">보기</button>
+        </div>
+
+        <div class="section-head"><div class="h2">최근 해결한 문제</div></div>
+        <div class="card" id="homeDoneList"></div>
+      </section>
+
+      <!-- ================= CLEAN ================= -->
+      <section class="panel hidden" id="panel-clean">
+        <div class="eyebrow">청소하기</div>
+        <div class="h1">어떤 공간이 신경 쓰이나요?</div>
+        <div class="sub">공간을 고르면 문제와 해결법을 같이 볼 수 있어요</div>
+        <div class="cat-grid" id="cleanGrid"></div>
+      </section>
+
+      <!-- ================= BOARD ================= -->
+      <section class="panel hidden" id="panel-board">
+        <div class="eyebrow">주기 보드</div>
+        <div class="h1">전체 관리 현황</div>
+        <div class="chip-row" id="boardChips"></div>
+        <div style="margin-top:14px;" id="boardList"></div>
+      </section>
+
+      <!-- ================= COMMERCE ================= -->
+      <section class="panel hidden" id="panel-commerce">
+        <div class="eyebrow">커머스</div>
+        <div class="h1">문제에 맞는 키트를 모아봤어요</div>
+        <div class="chip-row">
+          <button class="chip active">전체</button>
+          <button class="chip">자취 초보</button>
+          <button class="chip">장마철</button>
+          <button class="chip">욕실</button>
+        </div>
+        <div class="kit-grid" id="kitGrid"></div>
+      </section>
+
+      <!-- ================= MY ================= -->
+      <section class="panel hidden" id="panel-my">
+        <div class="my-header">
+          <div class="my-avatar">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.6" stroke="#2272EB" stroke-width="1.8"/><path d="M5 20c1-3.5 4-5.5 7-5.5s6 2 7 5.5" stroke="#2272EB" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </div>
+          <div><div class="h2">보송님</div><div class="sub">가입 3개월째</div></div>
+        </div>
+        <ul id="myList"></ul>
+      </section>
+
+      <!-- ================= BOTTOM NAV ================= -->
+      <nav class="bottom-nav" id="bottomNav">
+        <button class="nav-item active" data-tab="home">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1v-8Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+          <span>홈</span>
+        </button>
+        <button class="nav-item" data-tab="clean">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M12 3C12 3 6 9.5 6 14a6 6 0 0 0 12 0c0-4.5-6-11-6-11Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+          <span>청소하기</span>
+        </button>
+        <button class="nav-item" data-tab="board">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="15" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M4 9h16M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span>주기보드</span>
+        </button>
+        <button class="nav-item" data-tab="commerce">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M6 8h12l-1 12H7L6 8Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 8V6a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.8"/></svg>
+          <span>커머스</span>
+        </button>
+        <button class="nav-item" data-tab="my">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.4" stroke="currentColor" stroke-width="1.8"/><path d="M5 20c1-3.3 3.8-5.2 7-5.2s6 1.9 7 5.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span>마이</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- ================= OVERLAY: flow ================= -->
+    <div class="overlay" id="overlay">
+      <div class="overlay-top">
+        <button class="overlay-back" id="overlayBack">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="#191F28" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div>
+          <div class="overlay-step" id="overlayStep">STEP 1</div>
+          <div class="overlay-title" id="overlayTitle">제목</div>
+        </div>
+      </div>
+      <div class="overlay-body" id="overlayBody"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------------- 데이터 ---------------- */
+const ICONS = {
+  bath: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3C12 3 6 9.5 6 14a6 6 0 0 0 12 0c0-4.5-6-11-6-11Z" stroke="#3182F6" stroke-width="1.8" stroke-linejoin="round"/></svg>',
+  kitchen: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 9h14l-1.2 9.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8L5 9Z" stroke="#FF8FA3" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 9V7a4 4 0 0 1 8 0v2" stroke="#FF8FA3" stroke-width="1.8"/></svg>',
+  bedding: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="9" width="16" height="9" rx="2" stroke="#FFB800" stroke-width="1.8"/><path d="M4 13h16" stroke="#FFB800" stroke-width="1.8"/></svg>',
+  trash: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M7 8h10l-1 11a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2L7 8Z" stroke="#00C880" stroke-width="1.8" stroke-linejoin="round"/><path d="M5 8h14M10 5h4" stroke="#00C880" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  floor: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 20l6-15 6 15" stroke="#8B95A1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 12h6" stroke="#8B95A1" stroke-width="1.8"/></svg>',
+  appliance: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="5" y="5" width="14" height="14" rx="3" stroke="#2272EB" stroke-width="1.8"/><path d="M9 9v6M15 9v6" stroke="#2272EB" stroke-width="1.8" stroke-linecap="round"/></svg>'
+};
+const ICON_BG = { bath:'#EBF2FF', kitchen:'#FFF0F3', bedding:'#FFF6DE', trash:'#E6FBF3', floor:'#F2F4F6', appliance:'#EBF2FF' };
+
+const CATEGORIES = [
+  { id:'bath', name:'욕실·곰팡이', status:'late', last:'7월 1일', next:'지남',
+    issues:[
+      { id:'tile-water', name:'화장실 물때', time:'15분', level:'보통',
+        prep:'표면이 유리, 타일, 금속, 대리석 중 무엇인지 먼저 확인하세요.',
+        tools:'구연산 세제 또는 전용 물때 제거제, 부드러운 수세미, 장갑',
+        steps:['세제를 표면에 도포합니다','일정 시간 그대로 둡니다','부드럽게 문지르고 물로 헹굽니다'],
+        caution:'염소계 세제와 산성 세제는 절대 섞지 마세요.',
+        product:{name:'물때 제거제', price:'3,900원부터', meta:'다이소·온라인몰·B마트 · 좁은 틈에 바르기 쉬움'},
+        vendor:{name:'욕실 집중 청소 파트너', price:'35,000원부터', meta:'서울 일부 지역 · 바닥·세면대·줄눈·배수구 포함 · 실리콘 재시공 제외'} },
+      { id:'tile-mold', name:'타일 곰팡이', time:'20분', level:'보통',
+        prep:'환기하고 장갑과 마스크를 착용하세요.',
+        tools:'곰팡이 제거젤, 솔, 장갑',
+        steps:['물기를 제거합니다','제거젤을 줄눈에 바릅니다','일정 시간 뒤 솔로 문지르고 헹굽니다'],
+        caution:'환기 없이 밀폐된 공간에서 사용하지 마세요.',
+        product:{name:'곰팡이 제거젤', price:'4,500원부터', meta:'줄눈 전용 · 튜브형이라 바르기 쉬움'},
+        vendor:{name:'욕실 집중 청소 파트너', price:'35,000원부터', meta:'서울 일부 지역 · 곰팡이·물때·냄새 포함'} }
+    ]},
+  { id:'kitchen', name:'주방·냄새', status:'good', last:'7월 6일', next:'7월 13일',
+    issues:[
+      { id:'grease', name:'주방 기름때', time:'20분', level:'보통',
+        prep:'가스레인지 전원을 끄고 완전히 식힌 뒤 시작하세요.',
+        tools:'기름때 세제, 청소포, 장갑',
+        steps:['세제를 도포하고 5분 둡니다','청소포로 닦아냅니다','물기를 마른 천으로 정리합니다'],
+        caution:'뜨거운 표면에는 바로 세제를 뿌리지 마세요.',
+        product:{name:'기름때 세제', price:'5,200원부터', meta:'후드·인덕션 겸용'},
+        vendor:{name:'주방 청소 파트너', price:'39,000원부터', meta:'후드·기름때·냉장고 포함'} },
+      { id:'sink-smell', name:'싱크대 배수구 냄새', time:'10분', level:'쉬움',
+        prep:'배수구 거름망을 먼저 비워주세요.',
+        tools:'배수구 클리너, 솔',
+        steps:['거름망 찌꺼기를 제거합니다','클리너를 배수구에 붓습니다','뜨거운 물로 헹굽니다'],
+        caution:'표백제 계열과 섞어 쓰지 마세요.',
+        product:{name:'배수구 클리너', price:'4,000원부터', meta:'주 1회 사용 권장'},
+        vendor:{name:'주방 청소 파트너', price:'39,000원부터', meta:'싱크대·배수구 포함'} }
+    ]},
+  { id:'bedding', name:'침구·빨래', status:'soon', last:'6월 29일', next:'임박',
+    issues:[
+      { id:'smell', name:'빨래 쉰내', time:'세탁 1회', level:'쉬움',
+        prep:'세탁조 내부 냄새인지, 옷감 자체 냄새인지 확인하세요.',
+        tools:'세탁조 클리너, 섬유탈취제',
+        steps:['세탁조 클리너로 통세척을 돌립니다','옷은 완전 건조까지 마칩니다'],
+        caution:'젖은 채로 오래 두지 마세요.',
+        product:{name:'세탁조 클리너', price:'6,500원부터', meta:'월 1회 사용 권장'},
+        vendor:{name:'세탁 수거 파트너', price:'품목별', meta:'문 앞 수거·배송 · 이불류 가능'} },
+      { id:'mattress', name:'매트리스 얼룩', time:'25분', level:'보통',
+        prep:'얼룩 종류(음료, 땀, 기타)를 먼저 확인하세요.',
+        tools:'중성 세제, 마른 수건, 선풍기',
+        steps:['중성세제를 물에 희석해 두드리듯 닦습니다','마른 수건으로 수분을 흡수합니다','완전 건조시킵니다'],
+        caution:'세제를 과하게 뿌리면 곰팡이 원인이 됩니다.',
+        product:{name:'매트리스 클리너', price:'8,900원부터', meta:'섬유 손상 적음'},
+        vendor:{name:'침구 케어 파트너', price:'49,000원부터', meta:'매트리스 스팀 케어 포함'} }
+    ]},
+  { id:'trash', name:'쓰레기·수거', status:'late', last:'7월 2일', next:'지남',
+    issues:[
+      { id:'sort', name:'분리수거 방법', time:'5분', level:'쉬움',
+        prep:'플라스틱, 비닐, 종이류를 구분해두세요.',
+        tools:'분리수거 봉투',
+        steps:['재질별로 나눕니다','오염물은 헹궈서 배출합니다'],
+        caution:'지역별 배출 규정이 다를 수 있어요.',
+        product:{name:'분리수거 정리함', price:'12,000원부터', meta:'3분류 가능'},
+        vendor:{name:'문앞 수거 파트너', price:'월 구독형', meta:'봉투에 담아두면 대행 · 분리수거까지 처리'} },
+      { id:'food-trash', name:'음식물쓰레기 냄새', time:'5분', level:'쉬움',
+        prep:'음식물 통에 물기가 남아있는지 확인하세요.',
+        tools:'음식물 처리 봉투, 탈취제',
+        steps:['물기를 최대한 제거합니다','냉동 보관 또는 바로 배출합니다'],
+        caution:'국물류는 따로 짜서 버리세요.',
+        product:{name:'음식물 탈취제', price:'3,500원부터', meta:'냉장고·통 겸용'},
+        vendor:{name:'문앞 수거 파트너', price:'월 구독형', meta:'음식물까지 함께 수거'} }
+    ]},
+  { id:'floor', name:'바닥·공간', status:'good', last:'7월 5일', next:'7월 12일',
+    issues:[
+      { id:'sticky', name:'바닥 끈적임', time:'15분', level:'쉬움',
+        prep:'큰 먼지를 먼저 쓸어내세요.',
+        tools:'청소포, 극세사 밀대',
+        steps:['물걸레로 1차 닦습니다','건식 청소포로 마무리합니다'],
+        caution:'물걸레질 후 충분히 환기하세요.',
+        product:{name:'물청소포 세트', price:'7,900원부터', meta:'20매입'},
+        vendor:{name:'정기 가사청소 파트너', price:'35,000원부터', meta:'바닥·먼지·머리카락 포함'} },
+      { id:'hair', name:'머리카락·먼지 관리', time:'10분', level:'쉬움',
+        prep:'가구 밑, 구석부터 시작하세요.',
+        tools:'롤클리너, 먼지떨이',
+        steps:['구석부터 롤클리너로 정리합니다','전체 바닥을 마무리합니다'],
+        caution:'환풍기를 켜고 진행하면 먼지가 덜 날려요.',
+        product:{name:'롤클리너 리필', price:'4,200원부터', meta:'30매입'},
+        vendor:{name:'정기 가사청소 파트너', price:'35,000원부터', meta:'주 1회 정기 옵션 가능'} }
+    ]},
+  { id:'appliance', name:'가전·해충', status:'good', last:'6월 20일', next:'8월 초',
+    issues:[
+      { id:'washer', name:'세탁조 냄새', time:'세탁 1회', level:'쉬움',
+        prep:'통세척 코스가 있는지 확인하세요.',
+        tools:'세탁조 클리너',
+        steps:['클리너를 넣고 통세척 코스를 돌립니다','문을 열어 내부를 건조합니다'],
+        caution:'세탁 직후 문을 계속 열어두면 냄새 예방에 좋아요.',
+        product:{name:'세탁조 클리너', price:'6,500원부터', meta:'월 1회 사용 권장'},
+        vendor:{name:'가전 케어 파트너', price:'59,000원부터', meta:'세탁기 분해 청소'} },
+      { id:'aircon', name:'에어컨 필터 먼지', time:'10분', level:'쉬움',
+        prep:'전원과 코드를 반드시 분리하세요.',
+        tools:'필터 브러시, 물',
+        steps:['필터를 분리합니다','물로 헹구고 완전 건조합니다','다시 장착합니다'],
+        caution:'젖은 필터를 바로 장착하지 마세요.',
+        product:{name:'필터 세척 브러시', price:'3,300원부터', meta:'구석까지 세척 가능'},
+        vendor:{name:'가전 케어 파트너', price:'59,000원부터', meta:'에어컨 분해 청소 포함'} }
+    ]}
+];
+
+const KITS = [
+  { name:'자취 초보 키트', price:'19,900원', meta:'기본 세제 5종', color:'#EBF2FF' },
+  { name:'장마철 곰팡이 키트', price:'15,900원', meta:'제거젤 + 제습제', color:'#FFF0F3' },
+  { name:'욕실 물때 키트', price:'12,900원', meta:'제거제 + 전용 솔', color:'#F5F9FF' },
+  { name:'배수구 냄새 키트', price:'9,900원', meta:'클리너 + 거름망', color:'#E6FBF3' }
+];
+
+const MY_MENU = ['완료 기록','알림 설정','공간·가구 설정','담당자 설정','보유 도구','제휴·광고 안내','계정 설정'];
+
+const STATUS_LABEL = { good:'정상', soon:'임박', late:'지연' };
+const STATUS_BADGE = { good:'good', soon:'soon', late:'late' };
+
+let doneLog = [
+  { name:'배수구 청소', date:'7월 8일' },
+  { name:'현관 먼지 쓸기', date:'7월 6일' }
+];
+
+/* ---------------- 렌더 ---------------- */
+function renderHomeStamps(){
+  const row = document.getElementById('homeStampRow');
+  row.innerHTML = CATEGORIES.map(c => `
+    <button class="stamp" onclick="openCategory('${c.id}')">
+      <div class="stamp-circle ${c.status}">
+        ${c.status==='good' ? '<svg width="16" height="16" viewBox="0 0 20 20"><path d="M5 10l3.5 3.5L15 6" stroke="#00C880" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+        : c.status==='soon' ? '<svg width="12" height="12" viewBox="0 0 20 20"><circle cx="10" cy="10" r="3.4" fill="#A97400"/></svg>'
+        : '<svg width="16" height="16" viewBox="0 0 20 20"><path d="M5 10h10" stroke="#FF8FA3" stroke-width="2.5" stroke-linecap="round"/></svg>'}
+      </div>
+      <div class="stamp-label">${c.name.split('·')[0]}</div>
+    </button>
+  `).join('');
+}
+
+function renderHomeIssues(){
+  const list = document.getElementById('homeIssueList');
+  const late = CATEGORIES.filter(c => c.status==='late');
+  if(late.length===0){
+    list.innerHTML = `<div class="card desc">지금은 밀린 항목이 없어요. 다음 점검일에 다시 알려드릴게요.</div>`;
+    return;
+  }
+  list.innerHTML = late.map(c => `
+    <div class="card issue-card" onclick="openCategory('${c.id}')">
+      <div class="ic" style="background:${ICON_BG[c.id]}">${ICONS[c.id]}</div>
+      <div class="issue-card-body">
+        <div class="issue-card-title">${c.name} 점검이 조금 밀렸어요</div>
+        <div class="issue-card-copy">오늘은 5분짜리 방법부터 확인해볼까요?</div>
+      </div>
+      <svg class="issue-card-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+  `).join('');
+}
+
+function renderHomeDone(){
+  document.getElementById('homeDoneList').innerHTML = doneLog.slice(0,4).map(d => `
+    <div class="done-row"><span class="done-name">${d.name}</span><span class="done-date">${d.date}</span></div>
+  `).join('') || '<div class="desc">아직 기록이 없어요.</div>';
+}
+
+function renderCleanGrid(){
+  document.getElementById('cleanGrid').innerHTML = CATEGORIES.map(c => `
+    <button class="cat-card" onclick="openCategory('${c.id}')">
+      <div class="cat-icon" style="background:${ICON_BG[c.id]}">${ICONS[c.id]}</div>
+      <div class="cat-name">${c.name}</div>
+      <div class="cat-issues">${c.issues.length}개 문제 가이드</div>
+      <div class="cat-status"><span class="badge ${STATUS_BADGE[c.status]}">${STATUS_LABEL[c.status]}</span></div>
+    </button>
+  `).join('');
+}
+
+let boardFilter = 'all';
+function renderBoard(){
+  const chips = document.getElementById('boardChips');
+  chips.innerHTML = `<button class="chip ${boardFilter==='all'?'active':''}" onclick="setBoardFilter('all')">전체</button>` +
+    CATEGORIES.map(c => `<button class="chip ${boardFilter===c.id?'active':''}" onclick="setBoardFilter('${c.id}')">${c.name.split('·')[0]}</button>`).join('');
+
+  const rows = CATEGORIES.filter(c => boardFilter==='all' || c.id===boardFilter);
+  document.getElementById('boardList').innerHTML = rows.map(c => `
+    <div class="card board-row">
+      <div class="board-row-left">
+        <div class="board-row-name">${c.name}</div>
+        <div class="board-row-meta">마지막 ${c.last} · 다음 ${c.next} <span class="badge ${STATUS_BADGE[c.status]}" style="margin-left:6px;">${STATUS_LABEL[c.status]}</span></div>
+      </div>
+      <div class="board-actions">
+        <button class="btn ghost sm" onclick="openCategory('${c.id}')">방법</button>
+        <button class="btn secondary sm" onclick="markCategoryDone('${c.id}')">완료</button>
+      </div>
+    </div>
+  `).join('');
+}
+function setBoardFilter(id){ boardFilter = id; renderBoard(); }
+
+function renderKits(){
+  document.getElementById('kitGrid').innerHTML = KITS.map(k => `
+    <div class="kit-card">
+      <div class="kit-thumb" style="background:${k.color}">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M6 8h12l-1 12H7L6 8Z" stroke="#3182F6" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 8V6a3 3 0 0 1 6 0v2" stroke="#3182F6" stroke-width="1.6"/></svg>
+      </div>
+      <div class="kit-body">
+        <div class="kit-name">${k.name}</div>
+        <div class="kit-price">${k.price} <span>· ${k.meta}</span></div>
+        <button class="btn primary sm kit-add">담기</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderMy(){
+  document.getElementById('myList').innerHTML = MY_MENU.map(m => `
+    <li class="my-list-item"><span class="my-list-label">${m}</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 5l7 7-7 7" stroke="#8B95A1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </li>
+  `).join('');
+}
+
+function renderAll(){
+  renderHomeStamps(); renderHomeIssues(); renderHomeDone();
+  renderCleanGrid(); renderBoard(); renderKits(); renderMy();
+}
+renderAll();
+
+/* ---------------- 탭 전환 ---------------- */
+const tabs = ['home','clean','board','commerce','my'];
+document.querySelectorAll('.nav-item').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const tab = btn.dataset.tab;
+    tabs.forEach(t=>{
+      document.getElementById('panel-'+t).classList.toggle('hidden', t!==tab);
+    });
+    document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active', b===btn));
+    document.getElementById('scroll').scrollTop = 0;
+  });
+});
+
+/* ---------------- 오버레이 플로우 ---------------- */
+const overlay = document.getElementById('overlay');
+const overlayBody = document.getElementById('overlayBody');
+const overlayTitle = document.getElementById('overlayTitle');
+const overlayStep = document.getElementById('overlayStep');
+
+let flowState = { category:null, issue:null };
+let backStack = [];
+
+function openOverlay(){ overlay.classList.add('open'); }
+function closeOverlay(){ overlay.classList.remove('open'); backStack=[]; }
+
+function openCategory(catId){
+  flowState.category = CATEGORIES.find(c=>c.id===catId);
+  backStack = [renderIssueSelect];
+  renderIssueSelect();
+  openOverlay();
+}
+
+function renderIssueSelect(){
+  const c = flowState.category;
+  overlayStep.textContent = 'STEP 1 / 4';
+  overlayTitle.textContent = c.name + ' 문제 선택';
+  overlayBody.innerHTML = `
+    <div class="desc" style="margin-bottom:16px;">어떤 문제가 가장 가까운가요?</div>
+    <div class="issue-list">
+      ${c.issues.map(iss => `
+        <div class="issue-card" onclick="openGuide('${iss.id}')">
+          <div class="ic" style="background:${ICON_BG[c.id]}">${ICONS[c.id]}</div>
+          <div class="issue-card-body">
+            <div class="issue-card-title">${iss.name}</div>
+            <div class="issue-card-copy">예상 ${iss.time} · 난이도 ${iss.level}</div>
+          </div>
+          <svg class="issue-card-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function openGuide(issueId){
+  flowState.issue = flowState.category.issues.find(i=>i.id===issueId);
+  backStack.push(renderGuide);
+  renderGuide();
+}
+
+function renderGuide(){
+  const iss = flowState.issue;
+  overlayStep.textContent = 'STEP 2 / 4';
+  overlayTitle.textContent = iss.name;
+  overlayBody.innerHTML = `
+    <div class="guide-meta">
+      <span class="badge good">예상 ${iss.time}</span>
+      <span class="badge soon">난이도 ${iss.level}</span>
+    </div>
+    <div class="guide-block">
+      <div class="guide-block-label">먼저 확인할 것</div>
+      <div class="desc">${iss.prep}</div>
+    </div>
+    <div class="guide-block">
+      <div class="guide-block-label">준비물</div>
+      <div class="desc">${iss.tools}</div>
+    </div>
+    <div class="guide-block">
+      <div class="guide-block-label">순서</div>
+      <div class="guide-steps">
+        ${iss.steps.map((s,i)=>`<div class="guide-step"><div class="num">${i+1}</div>${s}</div>`).join('')}
+      </div>
+    </div>
+    <div class="guide-block">
+      <div class="guide-block-label">주의할 것</div>
+      <div class="caution-box">${iss.caution}</div>
+    </div>
+    <div class="guide-cta">
+      <button class="btn secondary block" onclick="openCompare()">도구·업체 보기</button>
+    </div>
+  `;
+}
+
+function openCompare(){
+  backStack.push(renderCompare);
+  renderCompare();
+}
+
+function renderCompare(){
+  const iss = flowState.issue;
+  overlayStep.textContent = 'STEP 3 / 4';
+  overlayTitle.textContent = '도구와 맡길 곳 비교';
+  overlayBody.innerHTML = `
+    <div class="desc">직접 할지, 맡길지 골라보세요. 둘 다 좋은 선택이에요.</div>
+    <div class="compare-section-label">직접 해결 도구</div>
+    <div class="compare-card">
+      <div class="compare-top"><div class="compare-name">${iss.product.name}</div><div class="compare-price">${iss.product.price}</div></div>
+      <div class="compare-meta">${iss.product.meta}</div>
+      <button class="btn secondary block" style="margin-top:12px;" onclick="completeFlow('SELF')">이 도구로 직접 해결</button>
+    </div>
+    <div class="compare-section-label">맡길 수 있는 서비스</div>
+    <div class="compare-card">
+      <div class="compare-top"><div class="compare-name">${iss.vendor.name}</div><div class="compare-price">${iss.vendor.price}</div></div>
+      <div class="compare-meta">${iss.vendor.meta}</div>
+      <button class="btn primary block" style="margin-top:12px;" onclick="completeFlow('PARTNER')">이 업체에 맡기기</button>
+    </div>
+  `;
+}
+
+function completeFlow(type){
+  backStack = [];
+  const c = flowState.category, iss = flowState.issue;
+  overlayStep.textContent = 'STEP 4 / 4';
+  overlayTitle.textContent = '완료';
+  overlayBody.innerHTML = `
+    <div class="complete-wrap">
+      <svg class="mascot" width="84" height="84" viewBox="0 0 120 120"><circle cx="60" cy="64" r="42" fill="#00C880"/><circle cx="48" cy="56" r="5.5" fill="#fff"/><circle cx="72" cy="56" r="5.5" fill="#fff"/><circle cx="48" cy="57.5" r="2.4" fill="#191F28"/><circle cx="72" cy="57.5" r="2.4" fill="#191F28"/><path d="M46 68 Q60 80 74 68" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round"/></svg>
+      <div class="complete-title">${type==='SELF' ? '해결했어요' : '요청을 보냈어요'}</div>
+      <div class="complete-sub">${iss.name} 문제가 ${type==='SELF' ? '해결' : '접수'}됐어요.<br>다음 점검은 자동으로 등록할게요.</div>
+      <div class="complete-toast"><b>${c.name} 다음 점검 등록됨</b><span>주기 보드에서 언제든 날짜를 수정할 수 있어요.</span></div>
+      <button class="btn primary block" style="margin-top:22px;" onclick="finishFlow('${c.id}','${iss.name}')">홈으로 돌아가기</button>
+    </div>
+  `;
+}
+
+function finishFlow(catId, issName){
+  const c = CATEGORIES.find(x=>x.id===catId);
+  c.status = 'good';
+  c.last = '오늘';
+  doneLog.unshift({ name: issName, date:'오늘' });
+  closeOverlay();
+  renderAll();
+}
+
+function markCategoryDone(catId){
+  const c = CATEGORIES.find(x=>x.id===catId);
+  c.status = 'good';
+  c.last = '오늘';
+  doneLog.unshift({ name: c.name + ' 정리', date:'오늘' });
+  renderAll();
+}
+
+document.getElementById('overlayBack').addEventListener('click', ()=>{
+  if(backStack.length > 1){
+    backStack.pop();
+    backStack[backStack.length-1]();
+  } else {
+    closeOverlay();
+  }
+});
+</script>
+</body>
+</html>

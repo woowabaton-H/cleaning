@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>보송 매니저 · 모바일 앱형 웹 UI</title>
+  <style>
+    :root {
+      --page: #edf3f8;
+      --app: #f8fbff;
+      --surface: #ffffff;
+      --surface-soft: #f2f7fb;
+      --blue: #2f80ed;
+      --blue-dark: #1c64d7;
+      --blue-soft: #e8f1ff;
+      --mint: #15b99a;
+      --mint-soft: #e6f8f3;
+      --yellow: #f4b73f;
+      --yellow-soft: #fff6df;
+      --coral: #ef6f7a;
+      --coral-soft: #fff0f2;
+      --ink: #182230;
+      --sub: #667085;
+      --muted: #98a2b3;
+      --line: #e4ebf2;
+      --line-strong: #d4e0ec;
+      --shadow: 0 20px 60px rgba(36, 58, 90, .16);
+      --radius-xl: 28px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 20% 8%, rgba(47, 128, 237, .16), transparent 34%),
+        radial-gradient(circle at 90% 0%, rgba(21, 185, 154, .12), transparent 28%),
+        var(--page);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      justify-content: center;
+    }
+
+    button, input { font: inherit; }
+    button { -webkit-tap-highlight-color: transparent; }
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+
+    .app-shell {
+      width: 100%;
+      max-width: 430px;
+      min-height: 100vh;
+      min-height: 100dvh;
+      background: var(--app);
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    @media (min-width: 640px) {
+      body { padding: 20px 0; }
+      .app-shell {
+        min-height: min(880px, calc(100dvh - 40px));
+        height: min(880px, calc(100dvh - 40px));
+        border: 1px solid rgba(24, 34, 48, .08);
+        border-radius: 36px;
+      }
+    }
+
+    .app-header {
+      position: absolute;
+      inset: 0 0 auto;
+      height: 72px;
+      z-index: 30;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 0 20px 14px;
+      background: rgba(248, 251, 255, .92);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(228, 235, 242, .75);
+    }
+    .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .brand-mark {
+      width: 34px; height: 34px; border-radius: 12px;
+      display: grid; place-items: center;
+      background: var(--blue);
+      box-shadow: 0 10px 22px rgba(47,128,237,.22);
+      flex: 0 0 auto;
+    }
+    .brand-title { font-weight: 900; letter-spacing: -0.04em; font-size: 19px; }
+    .brand-sub { font-size: 12px; color: var(--sub); font-weight: 650; margin-top: 1px; }
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+    .icon-button {
+      width: 42px; height: 42px; border: 0; border-radius: 16px;
+      display: grid; place-items: center;
+      background: var(--surface);
+      color: var(--ink);
+      box-shadow: inset 0 0 0 1px var(--line);
+      cursor: pointer;
+      position: relative;
+    }
+    .icon-button:focus-visible, .pill-button:focus-visible, .tab-button:focus-visible, .primary-btn:focus-visible,
+    .secondary-btn:focus-visible, .ghost-btn:focus-visible, .small-action:focus-visible, .category-card:focus-visible {
+      outline: 3px solid rgba(47,128,237,.26);
+      outline-offset: 2px;
+    }
+    .alert-dot {
+      position: absolute; top: 9px; right: 9px;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--coral); border: 2px solid var(--surface);
+    }
+
+    .views {
+      position: absolute;
+      inset: 72px 0 76px;
+      overflow: hidden;
+    }
+    .view {
+      display: none;
+      height: 100%;
+      overflow-y: auto;
+      padding: 18px 18px 28px;
+      scrollbar-width: none;
+      animation: viewIn .22s ease;
+    }
+    .view::-webkit-scrollbar { display: none; }
+    .view.active { display: block; }
+    @keyframes viewIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .tabbar {
+      position: absolute;
+      inset: auto 0 0;
+      height: calc(76px + var(--safe-bottom));
+      padding: 8px 10px calc(8px + var(--safe-bottom));
+      background: rgba(255, 255, 255, .96);
+      border-top: 1px solid var(--line);
+      backdrop-filter: blur(18px);
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      z-index: 40;
+    }
+    .tab-button {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      border-radius: 16px;
+      min-height: 56px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .tab-button svg { width: 22px; height: 22px; }
+    .tab-button.active { color: var(--blue); background: var(--blue-soft); }
+    .tab-button.clean-action {
+      transform: translateY(-14px);
+      background: var(--blue);
+      color: #fff;
+      width: 62px;
+      height: 62px;
+      border-radius: 22px;
+      margin: 0 auto;
+      box-shadow: 0 14px 24px rgba(47,128,237,.28);
+      border: 4px solid #fff;
+    }
+    .tab-button.clean-action.active { background: var(--blue-dark); }
+
+    h1, h2, h3, p { margin: 0; }
+    .section-title { font-size: 17px; font-weight: 900; letter-spacing: -.03em; margin: 0 0 12px; }
+    .section-caption { color: var(--sub); font-size: 13px; line-height: 1.5; font-weight: 620; }
+    .stack { display: grid; gap: 14px; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+    .hero-card {
+      background: linear-gradient(138deg, #ffffff 0%, #f6fbff 100%);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(32, 80, 120, .05);
+      overflow: hidden;
+      position: relative;
+    }
+    .hero-card:before {
+      content: "";
+      position: absolute; width: 160px; height: 160px;
+      border-radius: 999px; background: var(--blue-soft);
+      right: -66px; top: -58px; opacity: .85;
+    }
+    .hero-content { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr 86px; gap: 10px; align-items: center; }
+    .bubble {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      padding: 7px 11px;
+      background: var(--mint-soft);
+      color: #0c7f67;
+      font-size: 12px;
+      font-weight: 900;
+      border-radius: 999px;
+      margin-bottom: 10px;
+    }
+    .hero-title { font-size: 23px; line-height: 1.3; letter-spacing: -.05em; font-weight: 950; }
+    .hero-title strong { color: var(--blue); }
+    .hero-note { margin-top: 9px; max-width: 250px; }
+    .mascot-wrap { display: grid; place-items: center; align-self: stretch; }
+    .mascot { width: 86px; height: 86px; filter: drop-shadow(0 12px 16px rgba(47,128,237,.16)); }
+
+    .value-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 14px; }
+    .value-card {
+      background: rgba(255,255,255,.88);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 13px 12px;
+    }
+    .value-card strong { display: block; font-size: 13px; font-weight: 900; letter-spacing: -.02em; }
+    .value-card span { display: block; margin-top: 5px; color: var(--sub); font-size: 11.5px; line-height: 1.42; font-weight: 650; }
+
+    .stamp-card, .plain-card, .task-card, .commerce-card, .board-card, .history-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 8px 24px rgba(32, 80, 120, .045);
+    }
+    .stamp-card { padding: 17px; }
+    .stamp-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px; }
+    .stamp-score { font-size: 27px; letter-spacing: -.05em; font-weight: 950; }
+    .stamp-score span { color: var(--muted); font-size: 13px; font-weight: 760; }
+    .stamp-status { padding: 6px 10px; border-radius: 999px; background: var(--yellow-soft); color: #966c00; font-size: 11.5px; font-weight: 900; }
+    .stamp-status.clear { color: #0b8068; background: var(--mint-soft); }
+    .stamp-grid { display: grid; grid-template-columns: repeat(3, 1fr); row-gap: 15px; column-gap: 10px; }
+    .stamp-item { border: 0; background: transparent; display: grid; place-items: center; gap: 7px; color: var(--sub); padding: 0; cursor: pointer; border-radius: 14px; }
+    .stamp-item[disabled] { cursor: default; }
+    .stamp-mark {
+      width: 44px; height: 44px; border-radius: 999px;
+      display: grid; place-items: center;
+      transition: transform .25s ease, border-color .25s ease, background .25s ease;
+    }
+    .stamp-mark.done { background: var(--mint-soft); border: 2px solid var(--mint); }
+    .stamp-mark.soon { background: var(--yellow-soft); border: 2px solid var(--yellow); }
+    .stamp-mark.late { background: #fff; border: 2px dashed var(--coral); }
+    .stamp-mark.pop { animation: pop .45s ease; }
+    @keyframes pop { 0% { transform: scale(1); } 48% { transform: scale(1.18); } 100% { transform: scale(1); } }
+    .stamp-label { font-size: 11px; font-weight: 850; color: var(--sub); line-height: 1.25; }
+
+    .task-card { padding: 15px; position: relative; overflow: hidden; }
+    .task-card.late { border-color: rgba(239,111,122,.32); background: linear-gradient(180deg, #fff, #fff7f8); }
+    .task-card.soon { border-color: rgba(244,183,63,.32); background: linear-gradient(180deg, #fff, #fffaf0); }
+    .task-card.done { border-color: rgba(21,185,154,.24); }
+    .task-top { display: flex; gap: 12px; align-items: flex-start; }
+    .category-icon {
+      width: 44px; height: 44px; border-radius: 16px;
+      background: var(--blue-soft);
+      color: var(--blue);
+      display: grid; place-items: center;
+      flex: 0 0 auto;
+    }
+    .category-icon.mint { background: var(--mint-soft); color: #0c826c; }
+    .category-icon.coral { background: var(--coral-soft); color: var(--coral); }
+    .category-icon.yellow { background: var(--yellow-soft); color: #966c00; }
+    .task-body { flex: 1; min-width: 0; }
+    .task-title { font-size: 15px; font-weight: 930; letter-spacing: -.025em; }
+    .task-meta { margin-top: 5px; color: var(--sub); font-size: 12px; line-height: 1.45; font-weight: 650; }
+    .state-pill { flex: 0 0 auto; padding: 6px 9px; border-radius: 999px; font-size: 11px; font-weight: 900; }
+    .state-pill.late { background: var(--coral-soft); color: #c64f5a; }
+    .state-pill.soon { background: var(--yellow-soft); color: #966c00; }
+    .state-pill.done { background: var(--mint-soft); color: #0b8068; }
+    .task-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+    .task-actions.three { grid-template-columns: 1fr 1fr 1fr; }
+    .primary-btn, .secondary-btn, .ghost-btn, .small-action, .pill-button {
+      min-height: 44px;
+      border-radius: 14px;
+      font-weight: 900;
+      cursor: pointer;
+      border: 0;
+    }
+    .primary-btn { color: #fff; background: var(--blue); box-shadow: 0 10px 20px rgba(47,128,237,.18); }
+    .primary-btn:active, .secondary-btn:active, .ghost-btn:active, .small-action:active, .pill-button:active, .category-card:active { transform: scale(.98); }
+    .secondary-btn { background: var(--surface-soft); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+    .ghost-btn { background: transparent; color: var(--blue); box-shadow: inset 0 0 0 1px var(--blue-soft); }
+    .small-action { min-height: 36px; padding: 0 12px; background: var(--surface-soft); color: var(--sub); box-shadow: inset 0 0 0 1px var(--line); }
+
+    .progress-line { margin-top: 12px; height: 7px; border-radius: 99px; background: #eef2f6; overflow: hidden; }
+    .progress-line span { display: block; height: 100%; border-radius: inherit; background: var(--mint); }
+    .progress-line span.soon { background: var(--yellow); }
+    .progress-line span.late { background: var(--coral); }
+
+    .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+    .chips::-webkit-scrollbar { display: none; }
+    .pill-button {
+      min-height: 38px;
+      padding: 0 14px;
+      background: var(--surface);
+      color: var(--sub);
+      box-shadow: inset 0 0 0 1px var(--line);
+      white-space: nowrap;
+      font-size: 13px;
+    }
+    .pill-button.active { color: var(--blue); background: var(--blue-soft); box-shadow: inset 0 0 0 1px rgba(47,128,237,.28); }
+
+    .category-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .category-card {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      border-radius: 20px;
+      padding: 14px;
+      text-align: left;
+      cursor: pointer;
+      min-height: 126px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .category-card strong { font-size: 15px; font-weight: 950; letter-spacing: -.03em; }
+    .category-card span { color: var(--sub); font-size: 12px; line-height: 1.45; font-weight: 650; margin-top: 6px; display: block; }
+
+    .board-card { padding: 14px; display: grid; gap: 11px; }
+    .board-card .board-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .board-title { font-size: 15px; font-weight: 930; }
+    .board-meta { color: var(--sub); font-size: 12px; font-weight: 650; margin-top: 4px; }
+    .board-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+
+    .commerce-hero {
+      background: linear-gradient(135deg, var(--blue) 0%, #54b2ff 100%);
+      color: #fff;
+      border-radius: var(--radius-xl);
+      padding: 20px;
+      min-height: 138px;
+      position: relative;
+      overflow: hidden;
+    }
+    .commerce-hero:after {
+      content: ""; position: absolute; width: 160px; height: 160px;
+      right: -70px; bottom: -80px; border-radius: 999px;
+      background: rgba(255,255,255,.16);
+    }
+    .commerce-hero h2 { font-size: 24px; letter-spacing: -.05em; line-height: 1.25; font-weight: 950; position: relative; z-index: 1; }
+    .commerce-hero p { color: rgba(255,255,255,.88); margin-top: 9px; font-size: 13px; line-height: 1.45; font-weight: 650; position: relative; z-index: 1; }
+    .commerce-row { display: flex; gap: 12px; overflow-x: auto; padding: 1px 0 8px; scrollbar-width: none; }
+    .commerce-row::-webkit-scrollbar { display: none; }
+    .commerce-card {
+      min-width: 190px;
+      padding: 14px;
+      display: grid;
+      gap: 11px;
+    }
+    .product-thumb {
+      height: 98px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #f7fbff, #eef7f4);
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+    }
+    .product-name { font-size: 14px; font-weight: 930; line-height: 1.35; letter-spacing: -.02em; }
+    .product-meta { color: var(--sub); font-size: 12px; line-height: 1.4; font-weight: 650; }
+    .price { font-size: 15px; font-weight: 950; }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag { padding: 5px 8px; border-radius: 99px; background: var(--surface-soft); color: var(--sub); font-size: 11px; font-weight: 800; }
+
+    .history-card { padding: 13px; display: flex; align-items: center; gap: 11px; }
+    .history-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--mint); flex: 0 0 auto; }
+    .history-card strong { font-size: 13.5px; font-weight: 900; }
+    .history-card span { display: block; margin-top: 3px; color: var(--sub); font-size: 12px; font-weight: 650; }
+
+    .sheet-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, .42);
+      z-index: 80;
+      display: none;
+      align-items: flex-end;
+    }
+    .sheet-backdrop.open { display: flex; }
+    .bottom-sheet {
+      width: 100%;
+      max-height: 88%;
+      background: var(--surface);
+      border-radius: 28px 28px 0 0;
+      overflow: hidden;
+      transform: translateY(18px);
+      animation: sheetIn .22s ease forwards;
+      box-shadow: 0 -20px 40px rgba(15, 23, 42, .18);
+    }
+    @keyframes sheetIn { to { transform: translateY(0); } }
+    .sheet-head { padding: 16px 18px 12px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .sheet-title { font-size: 17px; font-weight: 950; letter-spacing: -.035em; }
+    .sheet-sub { margin-top: 3px; color: var(--sub); font-size: 12px; font-weight: 650; }
+    .sheet-body { padding: 16px 18px calc(18px + var(--safe-bottom)); max-height: calc(88dvh - 72px); overflow-y: auto; display: grid; gap: 14px; }
+    .stepper { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .stepper span { height: 4px; border-radius: 99px; background: var(--line); }
+    .stepper span.on { background: var(--blue); }
+    .issue-list { display: grid; gap: 9px; }
+    .issue-button {
+      min-height: 54px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 0 14px;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 900;
+    }
+    .issue-button span { color: var(--sub); font-size: 12px; font-weight: 700; }
+    .guide-card {
+      border: 1px solid var(--line);
+      background: var(--surface-soft);
+      border-radius: 18px;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+    .guide-card strong { font-size: 14px; font-weight: 950; }
+    .guide-card ol, .guide-card ul { margin: 0; padding-left: 20px; color: var(--sub); font-size: 13px; line-height: 1.65; font-weight: 650; }
+    .compare-list { display: grid; gap: 10px; }
+    .compare-card { border: 1px solid var(--line); border-radius: 18px; padding: 14px; background: #fff; display: grid; gap: 8px; }
+    .compare-card .row { align-items: flex-start; }
+    .compare-card strong { font-size: 14.5px; font-weight: 950; }
+    .compare-card p { color: var(--sub); font-size: 12.5px; line-height: 1.5; font-weight: 650; }
+    .disclosure { color: var(--muted); font-size: 11px; line-height: 1.5; font-weight: 650; }
+
+    .toast {
+      position: absolute;
+      left: 18px; right: 18px; bottom: calc(86px + var(--safe-bottom));
+      z-index: 120;
+      min-height: 52px;
+      border-radius: 18px;
+      background: rgba(24,34,48,.94);
+      color: #fff;
+      display: none;
+      align-items: center;
+      padding: 0 16px;
+      font-size: 13px;
+      font-weight: 780;
+      box-shadow: 0 12px 28px rgba(24,34,48,.22);
+    }
+    .toast.show { display: flex; animation: toastIn .25s ease; }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .divider { height: 1px; background: var(--line); margin: 4px 0; }
+    .mt-4 { margin-top: 4px; } .mt-8 { margin-top: 8px; } .mt-12 { margin-top: 12px; } .mt-18 { margin-top: 18px; } .mt-22 { margin-top: 22px; }
+
+    .hidden { display: none !important; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *:before, *:after { animation-duration: .001ms !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell" role="application" aria-label="보송 매니저 모바일 앱형 웹 UI">
+    <header class="app-header">
+      <div class="brand" aria-label="보송 매니저">
+        <div class="brand-mark" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="19" fill="white" opacity=".24"/><path d="M16 25.5l5 5L33 17" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div>
+          <div class="brand-title">보송 매니저</div>
+          <div class="brand-sub">상태가 알려주고, 해결까지</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="icon-button" type="button" onclick="openSheet('notification')" aria-label="알림 열기">
+          <span class="alert-dot" id="alertDot" aria-hidden="true"></span>
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21a2.6 2.6 0 0 0 2.5-1.9h-5A2.6 2.6 0 0 0 12 21Z" fill="currentColor"/><path d="M18.4 16.4l-1.2-1.8V10a5.2 5.2 0 0 0-10.4 0v4.6l-1.2 1.8c-.4.6 0 1.4.8 1.4h11.2c.8 0 1.2-.8.8-1.4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="views" id="views">
+      <main class="view active" id="view-home" aria-labelledby="homeTitle">
+        <section class="hero-card">
+          <div class="hero-content">
+            <div>
+              <div class="bubble">오늘은 두 가지만 챙기면 충분해요</div>
+              <h1 class="hero-title" id="homeTitle">밀린 청소를<br><strong>작게 나눠</strong> 해결해요.</h1>
+              <p class="section-caption hero-note">보송이가 주기를 세고, 필요한 방법과 도구, 맡길 곳까지 이어드릴게요.</p>
+            </div>
+            <div class="mascot-wrap" aria-hidden="true">
+              <svg class="mascot" viewBox="0 0 160 160" fill="none">
+                <path d="M78 27c22 0 46 19 46 45 0 30-20 53-46 53S32 102 32 72c0-26 24-45 46-45Z" fill="#2F80ED"/>
+                <path d="M42 76c-9-3-15-10-13-18 1-7 9-10 17-6" fill="#7DB7FF"/>
+                <path d="M114 76c9-3 15-10 13-18-1-7-9-10-17-6" fill="#7DB7FF"/>
+                <circle cx="62" cy="69" r="5" fill="white"/><circle cx="96" cy="69" r="5" fill="white"/>
+                <path d="M65 91c8 8 21 8 28 0" stroke="white" stroke-width="6" stroke-linecap="round"/>
+                <circle cx="48" cy="84" r="6" fill="#FF9FB0" opacity=".78"/><circle cx="110" cy="84" r="6" fill="#FF9FB0" opacity=".78"/>
+                <path d="M49 118c-7 8-11 18-10 24 15-1 25-7 32-18" fill="#2F80ED"/>
+                <path d="M107 118c7 8 11 18 10 24-15-1-25-7-32-18" fill="#2F80ED"/>
+              </svg>
+            </div>
+          </div>
+          <div class="value-grid" aria-label="핵심 가치">
+            <div class="value-card"><strong>상태 가시화</strong><span>무엇이 밀렸는지 바로 보기</span></div>
+            <div class="value-card"><strong>실행 연결</strong><span>방법, 용품, 업체까지 한 흐름</span></div>
+            <div class="value-card"><strong>수동 완료</strong><span>직접 했어도 주기가 바로 갱신</span></div>
+            <div class="value-card"><strong>재발 방지</strong><span>완료 후 다음 권장일 자동 등록</span></div>
+          </div>
+        </section>
+
+        <section class="mt-18 stamp-card" aria-labelledby="stampTitle">
+          <div class="stamp-head">
+            <div>
+              <p class="section-caption" id="stampTitle">이번 주 보송 스탬프</p>
+              <div class="stamp-score" id="stampScore">0<span> / 100</span></div>
+            </div>
+            <span class="stamp-status" id="stampStatus">계산 중</span>
+          </div>
+          <div class="stamp-grid" id="stampGrid"></div>
+        </section>
+
+        <section class="mt-22">
+          <div class="row">
+            <h2 class="section-title">지금 확인할 항목</h2>
+            <button class="small-action" type="button" onclick="showTab('board')">전체 보기</button>
+          </div>
+          <div class="stack" id="urgentTasks"></div>
+        </section>
+
+        <section class="mt-22">
+          <h2 class="section-title">10분 안에 가능한 청소</h2>
+          <div class="task-card done" id="quickCard">
+            <div class="task-top">
+              <div class="category-icon mint" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24" fill="none"><path d="M6 9h12M8 13h8M10 17h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="4" y="4" width="16" height="17" rx="5" stroke="currentColor" stroke-width="2"/></svg></div>
+              <div class="task-body">
+                <div class="task-title">배수구 머리카락 정리</div>
+                <div class="task-meta">예상 5분 · 오늘 완료하면 욕실 항목의 부담이 줄어요.</div>
+              </div>
+            </div>
+            <div class="task-actions">
+              <button class="secondary-btn" type="button" onclick="openGuide('bath')">방법 보기</button>
+              <button class="primary-btn" type="button" onclick="completeQuick()">완료했어요</button>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <main class="view" id="view-clean" aria-labelledby="cleanTitle">
+        <section>
+          <p class="section-caption">문제 선택</p>
+          <h2 class="section-title" id="cleanTitle">어디가 가장 신경 쓰이나요?</h2>
+          <div class="category-grid" id="categoryGrid"></div>
+        </section>
+        <section class="mt-22">
+          <h2 class="section-title">추천 해결 루프</h2>
+          <div class="plain-card" style="padding:16px;">
+            <p class="section-caption">선택한 문제는 <strong style="color:var(--ink)">문제 이해 → 가이드 → 도구/업체 비교 → 완료</strong> 순서로 진행돼요. 완료를 누르면 주기 보드가 자동으로 갱신됩니다.</p>
+            <button class="primary-btn mt-12" style="width:100%;" type="button" onclick="openGuide('bath')">욕실 곰팡이 예시 보기</button>
+          </div>
+        </section>
+      </main>
+
+      <main class="view" id="view-board" aria-labelledby="boardTitle">
+        <section>
+          <p class="section-caption">주기 보드</p>
+          <h2 class="section-title" id="boardTitle">전체 청소 상태</h2>
+          <div class="chips" id="boardFilters" aria-label="주기 보드 필터"></div>
+          <div class="stack mt-12" id="boardList"></div>
+        </section>
+      </main>
+
+      <main class="view" id="view-shop" aria-labelledby="shopTitle">
+        <section class="commerce-hero">
+          <h2 id="shopTitle">상황별로 고르는<br>보송 해결템</h2>
+          <p>상품을 나열하지 않고, 지금 밀린 문제와 연결되는 키트만 먼저 보여줘요.</p>
+        </section>
+        <section class="mt-18">
+          <div class="chips" id="shopChips" aria-label="상점 카테고리">
+            <button class="pill-button active" type="button">추천</button>
+            <button class="pill-button" type="button">BEST</button>
+            <button class="pill-button" type="button">NEW</button>
+            <button class="pill-button" type="button">욕실</button>
+            <button class="pill-button" type="button">자취 시작</button>
+          </div>
+        </section>
+        <section class="mt-18">
+          <h2 class="section-title">이번 주 추천 키트</h2>
+          <div class="commerce-row" id="shopRows"></div>
+        </section>
+        <section class="mt-22">
+          <h2 class="section-title">문제별 빠른 구매</h2>
+          <div class="stack" id="quickShopList"></div>
+        </section>
+      </main>
+
+      <main class="view" id="view-my" aria-labelledby="myTitle">
+        <section class="plain-card" style="padding:18px;">
+          <div class="row">
+            <div>
+              <p class="section-caption">김보송님의 기록</p>
+              <h2 class="section-title" id="myTitle" style="margin-bottom:0;">청소 발자국</h2>
+            </div>
+            <button class="small-action" type="button" onclick="clearHistory()">기록 초기화</button>
+          </div>
+        </section>
+        <section class="mt-18 stack" id="historyList"></section>
+        <section class="mt-22 plain-card" style="padding:16px;">
+          <h2 class="section-title">공동 관리 준비 중</h2>
+          <p class="section-caption">담당자 지정, 완료 기록 공유, 부드러운 리마인드는 다음 단계에서 확장하는 기능으로 남겼어요.</p>
+        </section>
+      </main>
+    </div>
+
+    <nav class="tabbar" aria-label="하단 네비게이션">
+      <button class="tab-button active" type="button" data-tab="home" onclick="showTab('home')" aria-current="page"><svg viewBox="0 0 24 24" fill="none"><path d="M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1v-8.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>홈</span></button>
+      <button class="tab-button" type="button" data-tab="board" onclick="showTab('board')"><svg viewBox="0 0 24 24" fill="none"><path d="M7 4v3M17 4v3M5 9h14M6 6h12a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>주기</span></button>
+      <button class="tab-button clean-action" type="button" data-tab="clean" onclick="showTab('clean')"><svg viewBox="0 0 24 24" fill="none"><path d="M6 13c4-1 6-3 7-7 2 4 4 6 7 7-4 1-6 3-7 7-1-4-3-6-7-7Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>청소</span></button>
+      <button class="tab-button" type="button" data-tab="shop" onclick="showTab('shop')"><svg viewBox="0 0 24 24" fill="none"><path d="M6 8h12l-1 12H7L6 8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 8a3 3 0 0 1 6 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>상점</span></button>
+      <button class="tab-button" type="button" data-tab="my" onclick="showTab('my')"><svg viewBox="0 0 24 24" fill="none"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4.5 20c1.6-3.3 4.1-5 7.5-5s5.9 1.7 7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>마이</span></button>
+    </nav>
+
+    <div class="sheet-backdrop" id="sheetBackdrop" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+      <div class="bottom-sheet">
+        <div class="sheet-head">
+          <div>
+            <div class="sheet-title" id="sheetTitle">해결 플로우</div>
+            <div class="sheet-sub" id="sheetSub">지금 필요한 단계만 볼게요.</div>
+          </div>
+          <button class="icon-button" type="button" onclick="closeSheet()" aria-label="닫기"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+        </div>
+        <div class="sheet-body" id="sheetBody"></div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </div>
+
+  <script>
+    const MS_PER_DAY = 1000 * 60 * 60 * 24;
+    const today = new Date('2026-07-09T12:00:00+09:00');
+    const daysAgo = (days) => new Date(today.getTime() - days * MS_PER_DAY).toISOString();
+    const fmt = (iso) => {
+      const d = new Date(iso);
+      return `${d.getMonth() + 1}월 ${d.getDate()}일`;
+    };
+    const dayDiff = (iso) => Math.max(0, Math.floor((today.getTime() - new Date(iso).getTime()) / MS_PER_DAY));
+
+    let activeFilter = '전체';
+    let sheetMode = null;
+    let currentCategory = 'bath';
+    let flowStep = 1;
+    let history = [
+      { id: 1, title: '방 바닥 먼지 정리', type: 'SELF', date: daysAgo(1) },
+      { id: 2, title: '침구 세탁 주기 확인', type: 'SELF', date: daysAgo(5) },
+      { id: 3, title: '주방 배수구 클리너 구매 연결', type: 'COMMERCE', date: daysAgo(8) }
+    ];
+
+    let tasks = [
+      { id: 'bath', category: '욕실·곰팡이', name: '욕실 타일 곰팡이 점검', targetDays: 14, lastCleanedDate: daysAgo(18), icon: 'bath', guide: '타일 곰팡이', issue: '곰팡이와 물때가 같이 보여요', action: '욕실 집중 청소' },
+      { id: 'trash', category: '쓰레기·수거', name: '분리수거와 음식물 정리', targetDays: 3, lastCleanedDate: daysAgo(2), icon: 'trash', guide: '문앞 수거', issue: '퇴근 후 분리배출이 계속 밀려요', action: '정기 수거' },
+      { id: 'laundry', category: '침구·빨래', name: '침구와 수건 세탁', targetDays: 14, lastCleanedDate: daysAgo(5), icon: 'laundry', guide: '침구 세탁', issue: '수건 냄새가 걱정돼요', action: '세탁 수거' },
+      { id: 'kitchen', category: '주방·냄새', name: '싱크대 배수구 냄새', targetDays: 7, lastCleanedDate: daysAgo(7), icon: 'kitchen', guide: '배수구 냄새', issue: '싱크대에서 냄새가 올라와요', action: '주방 청소' },
+      { id: 'floor', category: '바닥·공간', name: '바닥 머리카락 정리', targetDays: 4, lastCleanedDate: daysAgo(1), icon: 'floor', guide: '먼지와 머리카락', issue: '바닥이 금방 지저분해져요', action: '정기 청소' },
+      { id: 'appliance', category: '가전·해충', name: '에어컨 필터 점검', targetDays: 30, lastCleanedDate: daysAgo(12), icon: 'appliance', guide: '에어컨 냄새', issue: '틀 때마다 퀴퀴한 냄새가 나요', action: '분해 청소' }
+    ];
+
+    const products = [
+      { name: '욕실 곰팡이 해결 키트', meta: '제거젤 · 틈새솔 · 장갑', price: '9,900원대', tags: ['욕실', '초보자용'], type: 'kit' },
+      { name: '장마철 냄새 방지 키트', meta: '배수구망 · 탈취제 · 청소포', price: '12,000원대', tags: ['장마', '냄새'], type: 'kit' },
+      { name: '자취 시작 기본 청소 세트', meta: '다목적 세제 · 극세사 · 솔', price: '16,900원대', tags: ['BEST', '입문'], type: 'set' },
+      { name: '수세미 교체 패키지', meta: '2주 교체 기준 묶음', price: '4,900원대', tags: ['소모품', '정기'], type: 'sponge' }
+    ];
+
+    function statusOf(task) {
+      const elapsed = dayDiff(task.lastCleanedDate);
+      const ratio = elapsed / task.targetDays;
+      if (ratio >= 1) return 'late';
+      if (ratio >= 0.7) return 'soon';
+      return 'done';
+    }
+    function statusText(task) {
+      const status = statusOf(task);
+      const elapsed = dayDiff(task.lastCleanedDate);
+      if (status === 'late') return `${elapsed - task.targetDays}일 지연`;
+      if (status === 'soon') return `${task.targetDays - elapsed}일 뒤 권장`;
+      return `${task.targetDays - elapsed}일 남음`;
+    }
+    function iconSvg(type) {
+      const map = {
+        bath: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M6 11h12v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4v-4Z" stroke="currentColor" stroke-width="2"/><path d="M8 11V7a3 3 0 0 1 6 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M5 11h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+        trash: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M8 8h8l-.8 12H8.8L8 8Z" stroke="currentColor" stroke-width="2"/><path d="M7 8h10M10 8V5h4v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+        laundry: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="5" y="3" width="14" height="18" rx="4" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="14" r="4" stroke="currentColor" stroke-width="2"/><path d="M8 7h.01M11 7h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+        kitchen: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M5 13h14v3a4 4 0 0 1-4 4h-6a4 4 0 0 1-4-4v-3Z" stroke="currentColor" stroke-width="2"/><path d="M9 9c0-2 1.5-3 3-3s3 1 3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+        floor: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M5 18c4-3 10-3 14 0M7 13c3-2 7-2 10 0M9 8c2-1 4-1 6 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+        appliance: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="10" rx="3" stroke="currentColor" stroke-width="2"/><path d="M8 19h8M9 15l-1 4M15 15l1 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+        check: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M6 12.5l3.5 3.5L18 8" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+        soon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+        late: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 7v6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M12 17h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M10.4 4.5 3.7 16.3A2 2 0 0 0 5.4 19h13.2a2 2 0 0 0 1.7-2.7L13.6 4.5a1.8 1.8 0 0 0-3.2 0Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>'
+      };
+      return map[type] || map.check;
+    }
+
+    function showTab(tab) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById(`view-${tab}`).classList.add('active');
+      document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+        btn.removeAttribute('aria-current');
+        if (btn.dataset.tab === tab) btn.setAttribute('aria-current', 'page');
+      });
+      if (tab === 'board') renderBoard();
+      if (tab === 'my') renderHistory();
+    }
+
+    function render() {
+      renderStamp();
+      renderUrgent();
+      renderCategories();
+      renderBoardFilters();
+      renderBoard();
+      renderShop();
+      renderHistory();
+    }
+
+    function renderStamp() {
+      const grid = document.getElementById('stampGrid');
+      const lateCount = tasks.filter(t => statusOf(t) === 'late').length;
+      const soonCount = tasks.filter(t => statusOf(t) === 'soon').length;
+      const score = Math.round(((tasks.length - lateCount - soonCount * 0.35) / tasks.length) * 100);
+      document.getElementById('stampScore').innerHTML = `${score}<span> / 100</span>`;
+      const statusEl = document.getElementById('stampStatus');
+      statusEl.textContent = lateCount === 0 && soonCount === 0 ? '이번 주 클리어' : `${lateCount + soonCount}개 확인`;
+      statusEl.classList.toggle('clear', lateCount === 0 && soonCount === 0);
+      grid.innerHTML = tasks.map(task => {
+        const status = statusOf(task);
+        const icon = status === 'late' ? 'late' : status === 'soon' ? 'soon' : 'check';
+        const disabled = status === 'done' ? 'disabled' : '';
+        const action = status === 'done' ? '' : `onclick="openGuide('${task.id}')"`;
+        return `<button class="stamp-item" type="button" ${disabled} ${action} aria-label="${task.category} ${statusText(task)}">
+          <span class="stamp-mark ${status}" id="stamp-${task.id}">${iconSvg(icon)}</span>
+          <span class="stamp-label">${task.category.replace('·','<br>')}</span>
+        </button>`;
+      }).join('');
+    }
+
+    function renderUrgent() {
+      const target = document.getElementById('urgentTasks');
+      const list = tasks
+        .filter(t => statusOf(t) !== 'done')
+        .sort((a, b) => (dayDiff(b.lastCleanedDate) / b.targetDays) - (dayDiff(a.lastCleanedDate) / a.targetDays));
+      if (!list.length) {
+        target.innerHTML = `<div class="plain-card" style="padding:18px;text-align:center;"><p class="section-caption">오늘은 크게 밀린 항목이 없어요. 필요하면 주기 보드에서 직접 완료를 기록할 수 있어요.</p></div>`;
+        return;
+      }
+      target.innerHTML = list.map(taskCard).join('');
+    }
+
+    function taskCard(task) {
+      const status = statusOf(task);
+      const elapsed = dayDiff(task.lastCleanedDate);
+      const ratio = Math.min(100, Math.round(elapsed / task.targetDays * 100));
+      const stateLabel = status === 'late' ? '지연' : status === 'soon' ? '임박' : '정상';
+      const iconClass = status === 'late' ? 'coral' : status === 'soon' ? 'yellow' : 'mint';
+      return `<article class="task-card ${status}" aria-label="${task.name}">
+        <div class="task-top">
+          <div class="category-icon ${iconClass}" aria-hidden="true">${iconSvg(task.icon)}</div>
+          <div class="task-body">
+            <div class="task-title">${task.name}</div>
+            <div class="task-meta">마지막 ${fmt(task.lastCleanedDate)} · 목표 ${task.targetDays}일 · ${statusText(task)}</div>
+          </div>
+          <span class="state-pill ${status}">${stateLabel}</span>
+        </div>
+        <div class="progress-line" aria-hidden="true"><span class="${status}" style="width:${ratio}%"></span></div>
+        <div class="task-actions three">
+          <button class="secondary-btn" type="button" onclick="openGuide('${task.id}')">방법</button>
+          <button class="ghost-btn" type="button" onclick="openPartner('${task.id}')">맡기기</button>
+          <button class="primary-btn" type="button" onclick="completeTask('${task.id}', 'SELF')">완료</button>
+        </div>
+      </article>`;
+    }
+
+    function renderCategories() {
+      const grid = document.getElementById('categoryGrid');
+      grid.innerHTML = tasks.map(task => `<button class="category-card" type="button" onclick="openGuide('${task.id}')">
+        <div class="category-icon ${statusOf(task) === 'late' ? 'coral' : statusOf(task) === 'soon' ? 'yellow' : 'mint'}" aria-hidden="true">${iconSvg(task.icon)}</div>
+        <div><strong>${task.category}</strong><span>${task.issue}</span></div>
+      </button>`).join('');
+    }
+
+    function renderBoardFilters() {
+      const wrap = document.getElementById('boardFilters');
+      const filters = ['전체', '욕실', '주방', '침구', '수거', '가전'];
+      wrap.innerHTML = filters.map(f => `<button class="pill-button ${activeFilter === f ? 'active' : ''}" type="button" onclick="setBoardFilter('${f}')">${f}</button>`).join('');
+    }
+    function setBoardFilter(filter) {
+      activeFilter = filter;
+      renderBoardFilters();
+      renderBoard();
+    }
+    function renderBoard() {
+      const list = document.getElementById('boardList');
+      const filtered = activeFilter === '전체' ? tasks : tasks.filter(t => t.category.includes(activeFilter));
+      list.innerHTML = filtered.map(task => {
+        const status = statusOf(task);
+        const stateLabel = status === 'late' ? '지연' : status === 'soon' ? '임박' : '정상';
+        return `<article class="board-card">
+          <div class="board-row">
+            <div style="display:flex;gap:11px;align-items:center;min-width:0;">
+              <div class="category-icon ${status === 'late' ? 'coral' : status === 'soon' ? 'yellow' : 'mint'}" aria-hidden="true">${iconSvg(task.icon)}</div>
+              <div>
+                <div class="board-title">${task.name}</div>
+                <div class="board-meta">마지막 ${fmt(task.lastCleanedDate)} · ${statusText(task)}</div>
+              </div>
+            </div>
+            <span class="state-pill ${status}">${stateLabel}</span>
+          </div>
+          <div class="board-actions">
+            <button class="small-action" type="button" onclick="openGuide('${task.id}')">방법</button>
+            <button class="small-action" type="button" onclick="snoozeTask('${task.id}')">미루기</button>
+            <button class="small-action" type="button" onclick="completeTask('${task.id}', 'SELF')">완료</button>
+          </div>
+        </article>`;
+      }).join('');
+    }
+
+    function renderShop() {
+      const row = document.getElementById('shopRows');
+      row.innerHTML = products.map(p => `<article class="commerce-card">
+        <div class="product-thumb" aria-hidden="true">${productSvg(p.type)}</div>
+        <div>
+          <div class="product-name">${p.name}</div>
+          <div class="product-meta">${p.meta}</div>
+        </div>
+        <div class="row"><span class="price">${p.price}</span><button class="small-action" type="button" onclick="toast('외부 구매 페이지로 이동하는 CTA 예시입니다.')">보기</button></div>
+        <div class="tag-row">${p.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
+      </article>`).join('');
+      document.getElementById('quickShopList').innerHTML = tasks.slice(0, 3).map(task => `<article class="task-card">
+        <div class="task-top">
+          <div class="category-icon mint" aria-hidden="true">${iconSvg(task.icon)}</div>
+          <div class="task-body"><div class="task-title">${task.guide}에 필요한 도구</div><div class="task-meta">문제별 준비물과 주의사항을 먼저 보여줘요.</div></div>
+        </div>
+        <div class="task-actions"><button class="secondary-btn" type="button" onclick="openGuide('${task.id}')">가이드</button><button class="primary-btn" type="button" onclick="openCompare('${task.id}')">비교 보기</button></div>
+      </article>`).join('');
+    }
+    function productSvg(type) {
+      return `<svg width="74" height="74" viewBox="0 0 90 90" fill="none">
+        <rect x="16" y="22" width="50" height="52" rx="14" fill="#E8F1FF" stroke="#D4E0EC" stroke-width="2"/>
+        <path d="M27 22c2-8 8-12 17-12s15 4 17 12" stroke="#2F80ED" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="60" cy="28" r="12" fill="#E6F8F3" stroke="#15B99A" stroke-width="2"/>
+        <path d="M54 28l4 4 8-9" stroke="#15B99A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M28 45h24M28 55h18" stroke="#2F80ED" stroke-width="3" stroke-linecap="round" opacity=".55"/>
+      </svg>`;
+    }
+
+    function renderHistory() {
+      const list = document.getElementById('historyList');
+      if (!history.length) {
+        list.innerHTML = `<div class="plain-card" style="padding:20px;text-align:center;"><p class="section-caption">아직 기록이 없어요. 대시보드에서 완료 버튼을 눌러 첫 발자국을 남겨보세요.</p></div>`;
+        return;
+      }
+      list.innerHTML = history.map(h => `<article class="history-card"><span class="history-dot" aria-hidden="true"></span><div><strong>${h.title}</strong><span>${fmt(h.date)} · ${h.type}</span></div></article>`).join('');
+    }
+
+    function completeTask(id, type = 'SELF') {
+      const task = tasks.find(t => t.id === id);
+      if (!task) return;
+      task.lastCleanedDate = today.toISOString();
+      history.unshift({ id: Date.now(), title: task.name, type, date: today.toISOString() });
+      render();
+      const mark = document.getElementById(`stamp-${id}`);
+      if (mark) { mark.classList.add('pop'); setTimeout(() => mark.classList.remove('pop'), 480); }
+      toast(`${task.name} 완료. 다음 권장일이 자동으로 등록됐어요.`);
+      closeSheet();
+    }
+    function completeQuick() {
+      const task = tasks.find(t => t.id === 'bath');
+      if (task) task.lastCleanedDate = today.toISOString();
+      history.unshift({ id: Date.now(), title: '배수구 머리카락 정리', type: 'SELF', date: today.toISOString() });
+      render();
+      toast('빠른 청소 완료. 욕실 주기가 갱신됐어요.');
+    }
+    function snoozeTask(id) {
+      const task = tasks.find(t => t.id === id);
+      if (!task) return;
+      task.lastCleanedDate = new Date(new Date(task.lastCleanedDate).getTime() + MS_PER_DAY).toISOString();
+      render();
+      toast(`${task.name}을 하루 미뤘어요. 압박 대신 다시 시작할 수 있게 관리해요.`);
+    }
+    function clearHistory() {
+      history = [];
+      renderHistory();
+      toast('청소 발자국 예시 기록을 비웠어요.');
+    }
+
+    function openGuide(id) {
+      currentCategory = id;
+      flowStep = 1;
+      sheetMode = 'guide';
+      openSheet('guide');
+    }
+    function openCompare(id) {
+      currentCategory = id;
+      flowStep = 3;
+      sheetMode = 'guide';
+      openSheet('guide');
+    }
+    function openPartner(id) {
+      currentCategory = id;
+      sheetMode = 'partner';
+      openSheet('partner');
+    }
+    function openSheet(mode) {
+      if (mode === 'notification') sheetMode = 'notification';
+      if (mode === 'guide') sheetMode = 'guide';
+      if (mode === 'partner') sheetMode = 'partner';
+      document.getElementById('sheetBackdrop').classList.add('open');
+      document.getElementById('alertDot').classList.add('hidden');
+      renderSheet();
+    }
+    function closeSheet() {
+      document.getElementById('sheetBackdrop').classList.remove('open');
+    }
+    function renderSheet() {
+      const body = document.getElementById('sheetBody');
+      const title = document.getElementById('sheetTitle');
+      const sub = document.getElementById('sheetSub');
+      const task = tasks.find(t => t.id === currentCategory) || tasks[0];
+      if (sheetMode === 'notification') {
+        title.textContent = '알림';
+        sub.textContent = '압박보다 다시 시작을 돕는 알림이에요.';
+        body.innerHTML = `<div class="task-card late">
+          <div class="task-top"><div class="category-icon coral">${iconSvg('trash')}</div><div class="task-body"><div class="task-title">쓰레기 수거가 밀릴 수 있어요</div><div class="task-meta">오늘은 분리배출 방법만 확인해도 괜찮아요. 자주 밀리면 정기 수거도 볼 수 있어요.</div></div></div>
+          <div class="task-actions"><button class="secondary-btn" type="button" onclick="openGuide('trash')">방법 보기</button><button class="primary-btn" type="button" onclick="openPartner('trash')">정기 수거 보기</button></div>
+        </div>`;
+        return;
+      }
+      if (sheetMode === 'partner') {
+        title.textContent = `${task.action} 파트너`;
+        sub.textContent = '제휴 여부와 가격 정보를 숨기지 않아요.';
+        body.innerHTML = `<div class="plain-card" style="padding:16px;">
+          <p class="section-caption">${task.category}가 반복해서 밀린다면, 큰 청소가 아니라 작은 단위의 외주로 해결할 수 있어요.</p>
+        </div>
+        <div class="compare-list">
+          ${partnerCard('보송 제휴 파트너', task.action, task.id === 'trash' ? '9,900원/월부터' : '39,000원부터', '제휴 · 가격 공개 · 빠른 일정')}
+          ${partnerCard('지역 전문 업체', task.action, task.id === 'bath' ? '35,000원부터' : '견적 문의', '후기 기반 · 추가 비용 확인')}
+        </div>
+        <button class="primary-btn" type="button" onclick="completeTask('${task.id}', 'PARTNER')">신청 완료로 처리</button>
+        <p class="disclosure">프로토타입에서는 외부 API 없이 신청 버튼을 누르면 주기가 갱신되는 흐름만 시연합니다.</p>`;
+        return;
+      }
+      title.textContent = task.guide;
+      sub.textContent = `STEP ${flowStep} / 4 · ${task.category}`;
+      const stepper = `<div class="stepper" aria-hidden="true"><span class="${flowStep>=1?'on':''}"></span><span class="${flowStep>=2?'on':''}"></span><span class="${flowStep>=3?'on':''}"></span><span class="${flowStep>=4?'on':''}"></span></div>`;
+      if (flowStep === 1) {
+        body.innerHTML = `${stepper}<div><h3 class="section-title">어떤 문제가 가장 가까운가요?</h3><div class="issue-list">
+          <button class="issue-button" type="button" onclick="nextStep()">${task.issue}<span>추천</span></button>
+          <button class="issue-button" type="button" onclick="nextStep()">방법은 알고 싶지만 오늘은 부담돼요<span>가이드</span></button>
+          <button class="issue-button" type="button" onclick="openPartner('${task.id}')">직접 하기 어려워 맡기고 싶어요<span>업체</span></button>
+        </div></div>`;
+      } else if (flowStep === 2) {
+        body.innerHTML = `${stepper}<div class="guide-card"><strong>먼저 확인할 것</strong><ul><li>환기가 가능한 상태인지 확인합니다.</li><li>세제를 섞어 쓰지 않습니다.</li><li>표면 소재가 손상될 수 있으면 강한 도구를 피합니다.</li></ul></div>
+        <div class="guide-card"><strong>오늘 따라 할 순서</strong><ol><li>물기를 먼저 제거합니다.</li><li>문제 부위에 맞는 세제를 바릅니다.</li><li>일정 시간 뒤 부드럽게 문지르고 헹굽니다.</li><li>마른 천으로 닦고 다음 주기를 등록합니다.</li></ol></div>
+        <button class="primary-btn" type="button" onclick="nextStep()">도구와 맡길 곳 비교</button>`;
+      } else if (flowStep === 3) {
+        body.innerHTML = `${stepper}<div class="compare-list">
+          <div class="compare-card"><div class="row"><strong>직접 해결 도구</strong><span class="price">3,900원부터</span></div><p>${task.guide}에 필요한 최소 도구만 보여줘요. 구매하지 않고 대체 가능한 방법도 함께 둡니다.</p><div class="tag-row"><span class="tag">가격 비교</span><span class="tag">주의사항 표시</span></div></div>
+          ${partnerCard('맡길 수 있는 서비스', task.action, task.id === 'bath' ? '39,000원부터' : '9,900원/월부터', '가능 지역 · 범위 · 추가 비용')}
+        </div><button class="primary-btn" type="button" onclick="nextStep()">해결 완료 단계로</button>`;
+      } else {
+        body.innerHTML = `${stepper}<div class="plain-card" style="padding:18px;text-align:center;">
+          <svg width="74" height="74" viewBox="0 0 90 90" fill="none" style="margin-bottom:12px;"><circle cx="45" cy="45" r="36" fill="#E6F8F3"/><path d="M28 46l11 11 24-27" stroke="#15B99A" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <h3 class="section-title" style="margin-bottom:8px;">완료하면 다음 주기가 등록돼요</h3><p class="section-caption">확인 절차를 길게 만들지 않고, 완료 버튼 한 번으로 상태와 주기 보드를 갱신합니다.</p>
+        </div><button class="primary-btn" type="button" onclick="completeTask('${task.id}', 'SELF')">해결 완료</button>`;
+      }
+    }
+    function partnerCard(name, action, price, tags) {
+      return `<div class="compare-card"><div class="row"><strong>${name}</strong><span class="price">${price}</span></div><p>${action}에 맞는 파트너를 가격, 제공 범위, 추가 비용 기준으로 비교합니다.</p><div class="tag-row">${tags.split(' · ').map(t => `<span class="tag">${t}</span>`).join('')}</div></div>`;
+    }
+    function nextStep() { flowStep = Math.min(4, flowStep + 1); renderSheet(); }
+
+    function toast(message) {
+      const el = document.getElementById('toast');
+      el.textContent = message;
+      el.classList.add('show');
+      clearTimeout(window.toastTimer);
+      window.toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+    }
+
+    document.getElementById('sheetBackdrop').addEventListener('click', (e) => {
+      if (e.target.id === 'sheetBackdrop') closeSheet();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeSheet();
+    });
+
+    render();
+  </script>
+</body>
+</html>
