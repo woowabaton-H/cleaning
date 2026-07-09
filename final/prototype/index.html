@@ -33,56 +33,43 @@
 
       <main class="views" id="views">
         <section class="view active" id="view-home" aria-labelledby="homeTitle">
-          <div class="home-hero">
-            <div>
+          <div class="home-dashboard">
+            <div class="home-greeting">
               <p class="eyebrow">2026년 7월 10일 금요일</p>
-              <h1 id="homeTitle">오늘 청소부터 챙겨요.</h1>
-              <p class="hero-copy">큰 카테고리만으로 시작해요. 했으면 완료하고, 주기가 안 맞으면 바로 바꾸면 됩니다.</p>
+              <h1 id="homeTitle">김보송님</h1>
             </div>
-            <div class="hero-meter" aria-label="이번 달 완료 수">
-              <svg viewBox="0 0 86 86" width="86" height="86" aria-hidden="true">
-                <circle cx="43" cy="43" r="35" class="meter-bg" />
-                <circle cx="43" cy="43" r="35" class="meter-fg" id="monthlyMeter" />
-              </svg>
-              <strong id="monthlyMeterText">8</strong>
+            <div class="today-chip" aria-label="오늘 날짜">
+              <strong>10</strong>
+              <span>금</span>
             </div>
           </div>
 
-          <section class="section">
+          <div class="home-info-grid" id="homeInfoGrid" aria-label="청소 주기 요약"></div>
+
+          <section class="section compact">
             <div class="section-head">
-              <h2>내 청소 주기</h2>
-              <button class="text-button" type="button" id="addCategoryButton">카테고리 추가</button>
+              <h2>최근 완료</h2>
+              <button class="text-button" type="button" onclick="openHistorySheet()">전체 보기</button>
             </div>
-            <div class="stack" id="categoryList"></div>
+            <div class="history-strip" id="homeHistoryStrip"></div>
           </section>
 
           <section class="section">
             <div class="section-head">
-              <h2>이번 달 기록</h2>
-              <span class="muted">카테고리 완료 기준</span>
+              <h2>청소 주기</h2>
+              <button class="text-button" type="button" id="addCategoryButton">주기 추가</button>
             </div>
-            <div class="quick-row" id="recentLogs"></div>
+            <div class="stack" id="categoryList"></div>
           </section>
         </section>
 
         <section class="view" id="view-selection" aria-labelledby="selectionTitle">
-          <div class="selection-hero">
-            <p class="eyebrow">브랜드 셀렉션</p>
-            <h1 id="selectionTitle">청소 편집숍처럼, 좋은 선택지만 골라둘게요.</h1>
-            <p class="page-copy">상품을 많이 보여주는 곳이 아니라, 처음 쓰기 쉬운지와 어떤 상황에 맞는지를 먼저 설명합니다.</p>
-          </div>
+          <h1 class="sr-only" id="selectionTitle">브랜드 셀렉션</h1>
+          <div class="banner-carousel" id="selectionBanners" aria-label="셀렉션 배너"></div>
 
           <section class="section">
             <div class="section-head">
-              <h2>오늘의 셀렉션</h2>
-              <span class="muted">추천 이유 공개</span>
-            </div>
-            <div class="stack" id="featuredSelection"></div>
-          </section>
-
-          <section class="section">
-            <div class="section-head">
-              <h2>카테고리별로 보기</h2>
+              <h2>셀렉션 목록</h2>
             </div>
             <div class="filter-row" id="selectionFilters"></div>
             <div class="stack" id="selectionList"></div>
@@ -96,19 +83,19 @@
             <p class="page-copy">실제 사용자의 꿀팁과 답변을 먼저 모아봅니다.</p>
           </div>
 
-          <section class="section" style="margin-top:0;">
-            <div class="section-head">
-              <h2>반응 좋은 글</h2>
-              <span class="muted">저장·답변·도움됨 기준</span>
-            </div>
-            <div class="stack" id="popularCommunity"></div>
-          </section>
-
           <div class="segmented" role="tablist" aria-label="커뮤니티 분류">
             <button type="button" class="segment active" data-community-tab="tips">꿀팁 공유</button>
             <button type="button" class="segment" data-community-tab="qa">Q&amp;A</button>
           </div>
           <div class="stack" id="communityList"></div>
+        </section>
+
+        <section class="view" id="view-community-detail" aria-labelledby="communityDetailTitle">
+          <button class="back-button" type="button" id="communityBackButton">
+            <span aria-hidden="true">‹</span>
+            커뮤니티
+          </button>
+          <article class="community-detail" id="communityDetail"></article>
         </section>
 
         <section class="view" id="view-my" aria-labelledby="myTitle">
@@ -117,7 +104,7 @@
             <div>
               <p class="eyebrow">김보송님의 기록</p>
               <h1 id="myTitle">청소발자국</h1>
-              <p class="page-copy">큰 카테고리를 완료한 기록과 저장한 셀렉션을 모아둡니다.</p>
+              <p class="page-copy">내 청소 리듬을 짧게 보고, 자세한 기록은 메뉴에서 확인해요.</p>
             </div>
           </div>
 
@@ -133,16 +120,9 @@
 
           <section class="section">
             <div class="section-head">
-              <h2>최근 완료</h2>
+              <h2>메뉴</h2>
             </div>
-            <div class="stack" id="historyList"></div>
-          </section>
-
-          <section class="section">
-            <div class="section-head">
-              <h2>저장한 셀렉션</h2>
-            </div>
-            <div class="stack" id="savedSelection"></div>
+            <div class="menu-list" id="myMenus"></div>
           </section>
         </section>
       </main>
